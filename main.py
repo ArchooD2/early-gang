@@ -1,3 +1,9 @@
+# TODO: figure out wtf econ bot is mad about (he's adding two blank rows???)
+# TODO: add strike demands
+#  !killSnack, !swapSnack, !summonSong and !skipSong
+# TODO: add ai doug voice
+
+from time import *
 from bots.econBot import *
 from bots.commandBot import *
 from bots.pollBot import *
@@ -21,40 +27,45 @@ if isLive(yourChannelName):
     startInputBot()
 
 while True:
-    # if streamer goes live
-    if (isLive(yourChannelName) and isLive(streamerChannelName)):
-        # shut down everything
-        if ttsOn:
-            stopTTS()
-        if chatPlaying:
-            stopChatPlays()
-        if idleBotPlaying:
-            stopIdleBot()
-        if inputBotPlaying:
-            stopInputBot()
-        if autoSaving:
-            stopAutoSave()
+    try:
+        # if streamer goes live
+        if (isLive(yourChannelName) and isLive(streamerChannelName)):
+            # shut down everything
+            if ttsOn:
+                stopTTS()
+            if chatPlaying:
+                stopChatPlays()
+            if idleBotPlaying:
+                stopIdleBot()
+            if inputBotPlaying:
+                stopInputBot()
+            if autoSaving:
+                stopAutoSave()
 
-        # end stream
-        if isLive(yourChannelName):
-            raid(yourChannelName, streamerChannelName)
-            stopStream()
+            # end stream
+            if isLive(yourChannelName):
+                raid(yourChannelName, streamerChannelName)
+                stopStream()
 
-    # if streamer goes offline
-    elif (not isLive(yourChannelName) and not isLive(streamerChannelName)):
-        # start stream
-        if not isLive(yourChannelName):
-            startStream()
-        if not ttsOn:
-            startTTS()
-        if not chatPlaying:
-            startChatPlays()
-        if not autoSaving:
-            startAutoSave()
-        if not idleBotPlaying:
-            startIdleBot()
-        if not inputBotPlaying:
-            startInputBot()
+        # if streamer goes offline
+        elif (not isLive(yourChannelName) and not isLive(streamerChannelName)):
+            # start stream
+            if not isLive(yourChannelName):
+                startStream()
+            if not ttsOn:
+                startTTS()
+            if not chatPlaying:
+                startChatPlays()
+            if not autoSaving:
+                startAutoSave()
+            if not idleBotPlaying:
+                startIdleBot()
+            if not inputBotPlaying:
+                startInputBot()
+
+    except:
+        sleep(5)
+        connectToTwitchChat()
 
 # so asyncio doesn't yell at me
 econBotThread.join()
