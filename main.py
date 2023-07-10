@@ -1,8 +1,3 @@
-# TODO: figure out wtf econ bot is mad about (he's adding two blank rows???)
-# TODO: add strike demands
-#  !killSnack, !swapSnack, !summonSong and !skipSong
-# TODO: add ai doug voice
-
 from time import *
 from bots.econBot import *
 from bots.commandBot import *
