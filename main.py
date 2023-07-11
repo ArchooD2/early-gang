@@ -57,10 +57,12 @@ while True:
                 startIdleBot()
             if not inputBotPlaying:
                 startInputBot()
-
+    # if websockets disconnects
     except:
+        disconnectFromTwitchChat()
         sleep(5)
         connectToTwitchChat()
+        startChatPlays()
 
 # so asyncio doesn't yell at me
 econBotThread.join()

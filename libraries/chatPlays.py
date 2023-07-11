@@ -78,6 +78,11 @@ def connectToTwitchChat():
 	global connection
 	connection = twitch_chat_irc.TwitchChatIRC()
 
+def disconnectFromTwitchChat():
+	global connection
+	connection.close_connection()
+	connection = None
+
 # starts the input bot
 def startInputBot():
 	global inputBotPlaying
@@ -124,12 +129,7 @@ def stopChatPlays():
 def takeChatInputs():
 	global connection
 	global noRecentMessages
-
-	while True:
-		if connection is not None:
-			while True:
-				message = connection.listen(yourChannelName, on_message = controller, timeout = 300)
-				noRecentMessages = True
-		else:
-			print("connect to twitch before trying to receive messages bozo")
-			break
+	while connection is not None:
+		message = connection.listen(yourChannelName, on_message = controller, timeout = 300)
+		noRecentMessages = True
+	print("connect to twitch before trying to receive messages bozo")
