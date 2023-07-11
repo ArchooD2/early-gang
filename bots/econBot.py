@@ -334,7 +334,7 @@ class Bot(commands.Bot):
 
     @commands.command()
     async def bpShop(self, ctx: commands.Context):
-        await ctx.send("[bot] !skipSong, !summonSong, !shoot, !shootSnack, !swapSnack")
+        await ctx.send("[bot] !shoot, !shootSnack, !swapSnack")
 
     # times out user
     @commands.command()
