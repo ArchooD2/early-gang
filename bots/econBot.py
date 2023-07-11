@@ -261,11 +261,12 @@ class Bot(commands.Bot):
                 ctx.message.content = (ctx.message.content).replace("!giveBp ", "")
                 ctx.message.content = ctx.message.content.split(", ")
 
-                if getBroadcasterId([ctx.message.content[0]]) != None:
+                print(getBroadcasterId(ctx.message.content[0]))
+                if getBroadcasterId(ctx.message.content[0]) != None:
                     # updating points
                     rows = readFile()
                     for row in rows:
-                        if row[0] == str(getBroadcasterId([ctx.message.content[0]])):
+                        if row[0] == str(getBroadcasterId(ctx.message.content[0])):
                             print(row[2])
                             row[2] = int(row[2]) + int(ctx.message.content[1])
                             print(row[2])
