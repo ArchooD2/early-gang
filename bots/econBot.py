@@ -518,7 +518,7 @@ class Bot(commands.Bot):
                     await ctx.send("[bot] not enough basement pesos")
                 else:
                     chatPlays.snackShot = True
-                    await ctx.send("[bot] " + ctx.author.name + " shot " + currentSnack + " snack")
+                    await ctx.send("[bot] " + ctx.author.name + " " +  pastTenseActions[randint(0, len(pastTenseActions)-1)] + " " + chatPlays.currentSnack + " snack with " + items[randint(0, len(items)-1)])
 
                     if ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
                         row[2] = int(row[2]) - 2000
