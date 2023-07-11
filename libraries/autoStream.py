@@ -14,9 +14,14 @@ if os.path.exists(os.path.abspath(os.path.join("files"))):
 else:
     print("looking for files directory")
     for root, dirs, files in os.walk("\\"):
+        print(os.path.abspath(os.path.join(root)))
         if "early-gang-main\\files\\config.ini" in os.path.abspath(os.path.join(root, "config.ini")):
             directory = os.path.abspath(os.path.join(root))
-print(directory)
+
+if directory == "":
+    print("couldn't find directory")
+else:
+    print(directory)
 
 
 # reading config

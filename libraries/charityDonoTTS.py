@@ -1,6 +1,6 @@
 from obswebsocket import obsws
 from obswebsocket import requests as obwsrequests
-from autoStream import *
+from libraries.autoStream import *
 import os
 import time
 import threading
