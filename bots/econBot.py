@@ -340,6 +340,25 @@ class Bot(commands.Bot):
     # times out user
     @commands.command()
     async def shoot(self, ctx: commands.Context):
+        time = randint(10, 60)
+        finalId = ""
+
+        # getting mod ids
+        connected = False
+        while not connected:
+            try:
+                response = requests.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": f"Bearer {accessToken}"})
+                rateLimit = response.headers.get("Ratelimit-Remaining")
+                if rateLimit != "0":
+                    response = requests.get("https://api.twitch.tv/helix/moderation/moderators?broadcaster_id=" + getBroadcasterId(yourChannelName),headers={"Authorization": f"Bearer {accessToken}", "Client-Id": clientID})
+                    connected = True
+                else:
+                    sleep(5)
+            except:
+                sleep(5)
+        modIds = []
+        for mod in response.json().get("data"):
+            modIds += [mod.get("user_id")]
 
         # if no person named shoot random
         if ctx.message.content == "!shoot":
@@ -373,7 +392,7 @@ class Bot(commands.Bot):
                                 response = requests.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": f"Bearer {accessToken}"})
                                 rateLimit = response.headers.get("Ratelimit-Remaining")
                                 if rateLimit != "0":
-                                    response = requests.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + getBroadcasterId(yourChannelName) + "&moderator_id=" + getBroadcasterId(yourChannelName), headers = {"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json = {"data": {"user_id": user[0], "reason": "you got shot", "duration": randint(10, 60)}})
+                                    response = requests.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + getBroadcasterId(yourChannelName) + "&moderator_id=" + getBroadcasterId(yourChannelName), headers = {"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json = {"data": {"user_id": user[0], "reason": "you got shot", "duration": time}})
                                     connected = True
                                 else:
                                     sleep(5)
@@ -384,6 +403,10 @@ class Bot(commands.Bot):
                         if ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
                             row[2] = int(row[2]) - 2000
                             writeFile(rows)
+
+                        if user[0] in modIds:
+                            remodThread = threading.Thread(target=remod(user[0], time))
+                            remodThread.start()
                     break
         # try to shoot listed person
         else:
@@ -410,18 +433,18 @@ class Bot(commands.Bot):
                                         response = requests.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": f"Bearer {accessToken}"})
                                         rateLimit = response.headers.get("Ratelimit-Remaining")
                                         if rateLimit != "0":
-                                            response = requests.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + getBroadcasterId(yourChannelName) + "&moderator_id=" + getBroadcasterId(yourChannelName), headers = {"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json = {"data": {"user_id": getBroadcasterId(ctx.author.name), "reason": "you got shot", "duration": randint(10, 60)}})
+                                            response = requests.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + getBroadcasterId(yourChannelName) + "&moderator_id=" + getBroadcasterId(yourChannelName), headers = {"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json = {"data": {"user_id": getBroadcasterId(ctx.author.name), "reason": "you got shot", "duration": time}})
                                             connected = True
                                         else:
                                             sleep(5)
                                     except:
                                         sleep(5)
 
+                                finalId = getBroadcasterId(ctx.author.name)
                                 await ctx.send("[bot] " + ctx.author.name + " missed and " + items[randint(0, len(items)-1)] + " bounced into their head")
 
                             # 65% chance to shoot random
                             elif dice > 25:
-
                                 connected = False
                                 while not connected:
                                     try:
@@ -438,7 +461,7 @@ class Bot(commands.Bot):
                                 names = []
                                 for element in response.json().get("data"):
                                     names += [[element.get("user_id"), element.get("user_name")]]
-                                user =  names[randint(0, len(names)-1)]
+                                user = names[randint(0, len(names)-1)]
 
                                 connected = False
                                 while not connected:
@@ -447,13 +470,14 @@ class Bot(commands.Bot):
                                                                                                               "Authorization": f"Bearer {accessToken}"})
                                         rateLimit = response.headers.get("Ratelimit-Remaining")
                                         if rateLimit != "0":
-                                            response = requests.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + getBroadcasterId(yourChannelName) + "&moderator_id=" + getBroadcasterId(yourChannelName), headers = {"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json = {"data": {"user_id": user[0], "reason": "you got shot", "duration": randint(10, 60)}})
+                                            response = requests.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + getBroadcasterId(yourChannelName) + "&moderator_id=" + getBroadcasterId(yourChannelName), headers = {"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json = {"data": {"user_id": user[0], "reason": "you got shot", "duration": time}})
                                             connected = True
                                         else:
                                             sleep(5)
                                     except:
                                         sleep(5)
 
+                                finalId = user[0]
                                 await ctx.send("[bot] " + ctx.author.name + " tried to " + presentTenseActions[randint(0, len(presentTenseActions)-1)] + " " + ctx.message.content + " with "  + items[randint(0, len(items)-1)] + " but they used " + user[1] + " as a shield")
 
                             # 25% chance to shoot target
@@ -465,7 +489,7 @@ class Bot(commands.Bot):
                                         response = requests.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": f"Bearer {accessToken}"})
                                         rateLimit = response.headers.get("Ratelimit-Remaining")
                                         if rateLimit != "0":
-                                            response = requests.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + getBroadcasterId(yourChannelName) + "&moderator_id=" + getBroadcasterId(yourChannelName), headers = {"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json = {"data": {"user_id": id, "reason": "you got shot", "duration": randint(10, 60)}})
+                                            response = requests.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + getBroadcasterId(yourChannelName) + "&moderator_id=" + getBroadcasterId(yourChannelName), headers = {"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json = {"data": {"user_id": id, "reason": "you got shot", "duration": time}})
                                             connected = True
                                         else:
                                             sleep(5)
@@ -474,9 +498,14 @@ class Bot(commands.Bot):
 
                                 await ctx.send("[bot] " + ctx.author.name + " " + pastTenseActions[randint(0, len(pastTenseActions)-1)] + " " + ctx.message.content + " with " + items[randint(0, len(items)-1)])
 
+                            finalId = id
                             if ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
                                 row[2] = int(row[2]) - 2000
                                 writeFile(rows)
+
+                            if finalId in modIds:
+                                remodThread = threading.Thread(target=remod(finalId, time))
+                                remodThread.start()
                     break
 
     # disables input bot for 10 to 30 minutes
@@ -554,3 +583,18 @@ def updateWatchTime():
 def snackWait():
     sleep(randint(600, 1800))
     chatPlays.snackShot = False
+
+def remod(id, time):
+    sleep(time)
+    connected = False
+    while not connected:
+        try:
+            response = requests.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": f"Bearer {accessToken}"})
+            rateLimit = response.headers.get("Ratelimit-Remaining")
+            if rateLimit != "0":
+                response = requests.get("https://api.twitch.tv/helix/moderation/moderators?broadcaster_id=" + getBroadcasterId(yourChannelName) + "&user_id=" + id ,headers={"Authorization": f"Bearer {accessToken}", "Client-Id": clientID})
+                connected = True
+            else:
+                sleep(5)
+        except:
+            sleep(5)

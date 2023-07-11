@@ -32,7 +32,7 @@
 - go back to "Applications" then click "Manage" on the one you just made
 - you should see "Client ID" near the bottom of the page
 - paste said id into the twitch client id section in the python file
-- paste "https://id.twitch.tv/oauth2/authorize?client_id=CLIENT_ID_HERE&redirect_uri=http://localhost/&response_type=token&scope=viewing_activity_read+channel:manage:raids+chat:edit+chat:read+moderator:manage:banned_users+moderator:read:chatters" into your browser
+- paste "https://id.twitch.tv/oauth2/authorize?client_id=CLIENT_ID_HERE&redirect_uri=http://localhost/&response_type=token&scope=viewing_activity_read+channel:manage:raids+chat:edit+chat:read+moderator:manage:banned_users+moderator:read:chatters+channel:manage:moderators" into your browser
 - replace "CLIENT_ID_HERE" with your id and go to the url
 - you should be redirected to a new url that contains "access_token="
 - copy and paste that long ass string into the twitch access token section
