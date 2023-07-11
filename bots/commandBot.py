@@ -64,65 +64,17 @@ class Bot(commands.Bot):
 
     @commands.command()
     async def song(self, ctx: commands.Context):
-        global config
 
-        # reading config
-        clientId = config.get("spotify", "client id")
-        clientSecret = config.get("spotify", "client secret")
-        refreshToken = config.get("spotify", "refresh token")
-
-        # if you already made a refresh token
-        if refreshToken:
-            # create access token
-            response = requests.post("https://accounts.spotify.com/api/token", auth = (clientId, clientSecret), data = {"grant_type": "refresh_token", "refresh_token": refreshToken})
-            data = response.json()
-            if "access_token" in data:
-                accessToken = data["access_token"]
-            else:
-                print(f"error refreshing token: {data}")
-                accessToken = None
-
-                # makes another refresh token if cant create access token for whatever reason
-            if accessToken == None:
-                # gets authorization code from user
-                print(f'authorize this script by going to:\n{"https://accounts.spotify.com/authorize" + "?" + urlencode({"client_id": clientId, "response_type": "code", "redirect_uri": "http://localhost:8888/callback", "scope": "user-read-currently-playing"})}')
-                authorizationCode = input("enter the authorization code found in the redirected url after \"code=\": ")
-
-                # gets access token and refresh token using the code
-                response = requests.post("https://accounts.spotify.com/api/token", auth = (clientId, clientSecret),data = {"grant_type": "authorization_code", "code": authorizationCode, "redirect_uri": "http://localhost:8888/callback"})
-                data = response.json()
-                if "access_token" in data and 'refresh_token' in data:
-                    accessToken = data['access_token']
-                    refreshToken = data['refresh_token']
-                    # writes refresh token to info file for future use
-                    with open(os.path.abspath((os.path.join(directory, "config.ini"))), "a") as file:
-                        file.write(refreshToken)
-                else:
-                    print(f"problem getting tokens: {data}")
-
-                # writes refresh token to info file for future use
-                with open(os.path.abspath((os.path.join(directory, "config.ini"))), "a") as file:
-                    file.write(refreshToken)
-
-        # if you have no refresh token
+        # create access token
+        response = requests.post("https://accounts.spotify.com/api/token", auth = (spotifyClientID, spotifyClientSecret), data = {"grant_type": "refresh_token", "refresh_token": spotifyRefreshToken})
+        data = response.json()
+        if "access_token" in data:
+            accessToken = data["access_token"]
         else:
-            # gets authorization code from user
-            print(f'authorize this script by going to:\n{"https://accounts.spotify.com/authorize" + "?" + urlencode({"client_id": clientId, "response_type": "code", "redirect_uri": "http://localhost:8888/callback", "scope": "user-read-currently-playing"})}')
-            authorizationCode = input("enter the authorization code found in the redirected url after \"code=\": ")
+            print(f"error refreshing token: {data}")
+            accessToken = None
 
-            # gets access token and refresh token using the code
-            response = requests.post("https://accounts.spotify.com/api/token", auth = (clientId, clientSecret), data = {"grant_type": "authorization_code", "code": authorizationCode,"redirect_uri": "http://localhost:8888/callback"})
-            data = response.json()
-            if 'access_token' in data and 'refresh_token' in data:
-                accessToken = data['access_token']
-                refreshToken = data['refresh_token']
-                # writes refresh token to info file for future use
-                with open(os.path.abspath((os.path.join(directory, "config.ini"))), "a") as file:
-                    file.write(refreshToken)
-            else:
-                print(f"problem getting tokens: {data}")
-
-        # finally actually get and send playing song
+        # getting current song
         response = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers = {"Authorization": f"Bearer {accessToken}"})
         if response.status_code == 200:
             data = response.json()

@@ -336,16 +336,6 @@ class Bot(commands.Bot):
     async def bpShop(self, ctx: commands.Context):
         await ctx.send("[bot] !skipSong, !summonSong, !shoot, !shootSnack, !swapSnack")
 
-    # TODO
-    @commands.command()
-    async def skipSong(self, ctx: commands.Context):
-        await ctx.send("[bot] !skipSong, !summonSong, !shoot, !shootSnack, !swapSnack")
-
-    # TODO
-    @commands.command()
-    async def summonSong(self, ctx: commands.Context):
-        await ctx.send("[bot] !skipSong, !summonSong, !shoot, !shootSnack, !swapSnack")
-
     # times out user
     @commands.command()
     async def shoot(self, ctx: commands.Context):

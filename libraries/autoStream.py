@@ -5,6 +5,7 @@ import requests
 import pyautogui
 import os
 import configparser
+from urllib.parse import urlencode
 
 # finding directory
 directory = ""
@@ -25,6 +26,31 @@ clientID = config.get("twitch", "client id")
 accessToken = config.get("twitch", "access token")
 streamerChannelName = config.get("twitch", "streamer channel name")
 yourChannelName = config.get("twitch", "your channel name")
+
+spotifyClientID = config.get("spotify", "client id")
+spotifyClientSecret = config.get("spotify", "client secret")
+spotifyRefreshToken = config.get("spotify", "spotify refresh token")
+
+# if you don't have a refresh token
+if spotifyRefreshToken == "":
+    print(f'authorize this script by going to:\n{"https://accounts.spotify.com/authorize" + "?" + urlencode({"client_id": spotifyClientID, "response_type": "code", "redirect_uri": "http://localhost:8888/callback", "scope": "user-read-currently-playing user-modify-playback-state"})}')
+    authorizationCode = input("enter the authorization code found in the redirected url after \"code=\": ")
+
+    # gets access token and refresh token using the code
+    response = requests.post("https://accounts.spotify.com/api/token", auth = (spotifyClientID, spotifyClientSecret), data = {"grant_type": "authorization_code", "code": authorizationCode, "redirect_uri": "http://localhost:8888/callback"})
+    data = response.json()
+    if 'refresh_token' in data:
+        # writes refresh token to info file for future use
+        with open(os.path.abspath((os.path.join(directory, "config.ini"))), 'r') as file:
+            lines = file.readlines()
+        for i, line in enumerate(lines):
+            if line.startswith("spotify refresh token ="):
+                lines[i] = "spotify refresh token = " + data['refresh_token'] + "\n"  # Replace "token" with the desired value
+                break  # Exit the loop once the line is found
+        with open(os.path.abspath((os.path.join(directory, "config.ini"))), 'w') as file:
+            file.writelines(lines)
+    else:
+        print(f"problem getting tokens: {data}")
 
 # checks if a channel is live then returns true if they are, false if not, and none if an error occurs
 def isLive(channelName):

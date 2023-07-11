@@ -33,9 +33,8 @@ if refreshToken == "":
         lines = file.readlines()
     for i, line in enumerate(lines):
         if line.startswith("refresh token ="):
-            lines[i] = "refresh token = " + response.json().get(
-                "refresh_token") + "\n"  # Replace "token" with the desired value
-            break  # Exit the loop once the line is found
+            lines[i] = "refresh token = " + response.json().get("refresh_token") + "\n"
+            break
     with open(os.path.abspath((os.path.join(directory, "config.ini"))), 'w') as file:
         file.writelines(lines)
 
