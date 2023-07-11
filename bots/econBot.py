@@ -7,6 +7,7 @@ import threading
 import csv
 from twitchio.ext import commands
 from libraries.autoStream import *
+from libraries.chatPlays import *
 import requests
 import os
 from datetime import datetime, timezone
@@ -31,7 +32,6 @@ with open(os.path.abspath((os.path.join(directory, "randomPastTenseActions.txt")
 with open(os.path.abspath((os.path.join(directory, "randomPresentTenseActions.txt"))), "r") as file:
     presentTenseActions = file.read()
     presentTenseActions = presentTenseActions.split("\n")
-
 
 def startEconBot():
     global live
@@ -102,11 +102,9 @@ class Bot(commands.Bot):
         global chatters
         global readingFile
         global appendingFile
-        data = await self.fetch_users([user.name])
-
         # adds chatter id, watch time start, and uptime start
-        if data[0].id not in chatters:
-            chatters += [[data[0].id, time(), time()]]
+        if getBroadcasterId(user.name) not in chatters:
+            chatters += [[getBroadcasterId(user.name), time(), time()]]
 
         # read the existing ids from the csv file
         csvIds = []
@@ -348,6 +346,7 @@ class Bot(commands.Bot):
     async def summonSong(self, ctx: commands.Context):
         await ctx.send("[bot] !skipSong, !summonSong, !shoot, !shootSnack, !swapSnack")
 
+    # times out user
     @commands.command()
     async def shoot(self, ctx: commands.Context):
 
@@ -392,9 +391,9 @@ class Bot(commands.Bot):
 
                         await ctx.send("[bot] " + ctx.author.name +  " " + pastTenseActions[randint(0, len(pastTenseActions)-1)] + " " + user[1] + " with " + items[randint(0, len(items)-1)])
                         if ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
-                            row[2] = int(row[2]) - 200
+                            row[2] = int(row[2]) - 2000
                             writeFile(rows)
-                        break
+                    break
         # try to shoot listed person
         else:
             rows = readFile()
@@ -487,17 +486,45 @@ class Bot(commands.Bot):
                             if ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
                                 row[2] = int(row[2]) - 2000
                                 writeFile(rows)
-                            break
+                    break
 
-    # TODO
+    # disables input bot for 10 to 30 minutes
     @commands.command()
     async def shootSnack(self, ctx: commands.Context):
-        await ctx.send("[bot] !skipSong, !summonSong, !shoot, !shootSnack, !swapSnack")
+        rows = readFile()
+        for row in rows:
+            if row[0] == str(getBroadcasterId(ctx.author.name)):
+                if int(row[2]) < 2000 and ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
+                    await ctx.send("[bot] not enough basement pesos")
+                else:
+                    chatPlays.snackShot = True
+                    await ctx.send("[bot] " + ctx.author.name + " shot " + currentSnack + " snack")
 
-    # TODO
+                    if ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
+                        row[2] = int(row[2]) - 2000
+                        writeFile(rows)
+                    break
+
+                    waitThread = threading.Thread(target=snackWait)
+                    waitThread.start()
+
+# changes input bot type
     @commands.command()
     async def swapSnack(self, ctx: commands.Context):
-        await ctx.send("[bot] was swapped in")
+
+        rows = readFile()
+        for row in rows:
+            if row[0] == str(getBroadcasterId(ctx.author.name)):
+                if int(row[2]) < 1000 and ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
+                    await ctx.send("[bot] not enough basement pesos")
+                else:
+                    chatPlays.currentSnack = snacks[randint(0, len(snacks) - 1)]
+                    await ctx.send("[bot] " + currentSnack + " snack was swapped in")
+
+                    if ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
+                        row[2] = int(row[2]) - 1000
+                        writeFile(rows)
+                    break
 
 # as soon as bot is logged in constantly check the array and update watch time and points
 def updateWatchTime():
@@ -531,3 +558,8 @@ def updateWatchTime():
         else:
             live = False
         sleep(1)
+
+# thread to wait to restart input bot
+def snackWait():
+    sleep(randint(600, 1800))
+    chatPlays.snackShot = False
