@@ -510,7 +510,7 @@ class Bot(commands.Bot):
                     await ctx.send("[bot] not enough basement pesos")
                 else:
                     chatPlays.currentSnack = snacks[randint(0, len(snacks) - 1)]
-                    await ctx.send("[bot] " + currentSnack + " snack was swapped in")
+                    await ctx.send("[bot] " + chatPlays.currentSnack + " snack was swapped in")
 
                     if ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
                         row[2] = int(row[2]) - 1000
