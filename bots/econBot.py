@@ -53,7 +53,7 @@ def bankruptSna1l():
     rows = readFile()
     for row in rows:
         if row[0] == str(167113999):
-            row[2] = "-" + str(sys.maxsize)
+            row[2] = "-" + str(1000000)
             break
     writeFile(rows)
 
@@ -70,6 +70,7 @@ def readFile():
                 reader = csv.reader(file)
                 rows = list(reader)
             readingFile = False
+    rows = [row for row in rows if row]
     return rows
 
 # writes a list of rows to economy.csv
@@ -103,7 +104,7 @@ class Bot(commands.Bot):
         global readingFile
         global appendingFile
         # adds chatter id, watch time start, and uptime start
-        if getBroadcasterId(user.name) not in chatters:
+        if getBroadcasterId(user.name) not in chatters and getBroadcasterId(user.name) is not None:
             chatters += [[getBroadcasterId(user.name), time(), time()]]
 
         # read the existing ids from the csv file
@@ -206,7 +207,6 @@ class Bot(commands.Bot):
         global readingFile
         global appendingFile
 
-
         if isLive(yourChannelName):
             # calculate points gained/loss
             connected = False
@@ -232,7 +232,7 @@ class Bot(commands.Bot):
             # updating points
             rows = readFile()
             for row in rows:
-                if row[0] == str(getBroadcasterId([ctx.author.name])):
+                if row[0] == str(getBroadcasterId(ctx.author.name)):
                     # if first !first, give 100 points
                     if not firstRedeemed:
                         row[2] = int(row[2]) + int(points)
@@ -278,17 +278,17 @@ class Bot(commands.Bot):
             if ctx.message.content == "!giveBp" or ctx.message.content == "!giveBp ":
                     await ctx.send("please include the user and amount your command messages formatted like !giveBP user, 100")
             else:
-                ctx.message.content = (ctx.message.content).replace("!giveBp ", "")
+                ctx.message.content = ctx.message.content.replace("!giveBp ", "")
                 ctx.message.content = ctx.message.content.split(", ")
 
-                if getBroadcasterId([ctx.author.name]) != "" and getBroadcasterId([ctx.message.content[0]]) != "":
+                if getBroadcasterId([ctx.author.name]) != "" and getBroadcasterId(ctx.message.content[0]) != "":
                     # updating points
                     rows = readFile()
                     foundTaker = False
                     foundGiver = False
 
                     for row in rows:
-                        if row[0] == str(getBroadcasterId([ctx.author.name])):
+                        if row[0] == str(getBroadcasterId(ctx.author.name)):
                             foundGiver = True
                             if int(row[2]) < int(ctx.message.content[1]):
                                 ctx.message.content[1] = int(row[2])
@@ -296,7 +296,7 @@ class Bot(commands.Bot):
                             break
 
                     for row in rows:
-                        if row[0] == str(getBroadcasterId([ctx.message.content[0]])):
+                        if row[0] == str(getBroadcasterId(ctx.message.content[0])):
                             foundTaker = True
                             row[2] = int(row[2]) + int(ctx.message.content[1])
                             break
@@ -322,7 +322,7 @@ class Bot(commands.Bot):
                 ctx.message.content = (ctx.message.content).replace("!bpTax ", "")
                 ctx.message.content = ctx.message.content.split(", ")
 
-                if getBroadcasterId([ctx.message.content[0]]) != None:
+                if getBroadcasterId(ctx.message.content[0]) != None:
 
                     # updating points
                     rows = readFile()
