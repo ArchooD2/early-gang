@@ -308,7 +308,7 @@ class Bot(commands.Bot):
                     # updating points
                     rows = readFile()
                     for row in rows:
-                        if row[0] == str(getBroadcasterId([ctx.message.content[0]])):
+                        if row[0] == str(getBroadcasterId(ctx.message.content[0])):
                             row[2] = int(row[2]) - int(ctx.message.content[1])
                             await ctx.send("[bot] took from " + ctx.message.content[0] + " " + ctx.message.content[1] + " basement pesos")
                             break
@@ -544,9 +544,8 @@ def updateWatchTime():
                     element[2] = time()
                 live = True
                 firstRedeemed = False
-
+            rows = readFile()
             for element in chatters:
-                rows = readFile()
                 for row in rows:
                     if row[0] == str(element[0]):
                         if (time() - element[2]) >= 300:
