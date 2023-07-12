@@ -173,14 +173,10 @@ class Bot(commands.Bot):
         global readingFile
         global appendingFile
 
-        # finding user id
-        data = await self.fetch_users([ctx.author.name])
-        data = data[0].id
-
         # checks each row for id and if so retrieves the associated watchtime and sends it
         rows = readFile()
         for row in rows:
-            if row[0] == str(data):
+            if row[0] == str(getBroadcasterId(ctx.author.name)):
                 await ctx.send("[bot] " + ctx.author.name + " has " + str(round(float(row[2]))) + " basement pesos")
                 break
 
@@ -266,7 +262,7 @@ class Bot(commands.Bot):
                 ctx.message.content = ctx.message.content.replace("!giveBp ", "")
                 ctx.message.content = ctx.message.content.split(", ")
 
-                if getBroadcasterId([ctx.author.name]) != "" and getBroadcasterId(ctx.message.content[0]) != "":
+                if getBroadcasterId(ctx.author.name) != "" and getBroadcasterId(ctx.message.content[0]) != "":
                     # updating points
                     rows = readFile()
                     foundTaker = False
@@ -559,7 +555,7 @@ def updateWatchTime():
                         row[1] = float(row[1]) + (time() - element[1])
                         element[1] = time()
                         break
-                writeFile(rows)
+            writeFile(rows)
         else:
             live = False
         sleep(1)
