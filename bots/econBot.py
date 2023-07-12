@@ -37,25 +37,10 @@ def startEconBot():
     global live
     live = isLive(yourChannelName)
 
-    bankruptSna1l()
-
     bot = Bot()
     bot_thread = threading.Thread(target=bot.run)
     bot_thread.start()
     return bot_thread
-
-# gives user sna1l_boy the max negative balance
-def bankruptSna1l():
-    global readingFile
-    global writingFile
-    global appendingFile
-
-    rows = readFile()
-    for row in rows:
-        if row[0] == str(167113999):
-            row[2] = "-" + str(1000000)
-            break
-    writeFile(rows)
 
 # reads economy.csv and returns the contents
 def readFile():
@@ -70,7 +55,7 @@ def readFile():
                 reader = csv.reader(file)
                 rows = list(reader)
             readingFile = False
-    rows = [row for row in rows if row]
+    rows = [row for row in rows if any(field.strip() for field in row)]
     return rows
 
 # writes a list of rows to economy.csv
@@ -244,7 +229,7 @@ class Bot(commands.Bot):
                         else:
                             row[2] = 0
                         await ctx.send("[bot] " + ctx.author.name + " is not first " + ctx.author.name + " lost " + str(points) + " basement pesos")
-                break
+                    break
             writeFile(rows)
 
     # lets users give their points to each other
