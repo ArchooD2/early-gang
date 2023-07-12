@@ -567,13 +567,18 @@ def snackWait():
 
 def remod(id, time):
     sleep(time)
+    modIds = []
     connected = False
-    while not connected:
+    while not connected and id not in modIds:
         try:
             response = requests.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": f"Bearer {accessToken}"})
             rateLimit = response.headers.get("Ratelimit-Remaining")
             if rateLimit != "0":
                 response = requests.get("https://api.twitch.tv/helix/moderation/moderators?broadcaster_id=" + getBroadcasterId(yourChannelName) + "&user_id=" + id ,headers={"Authorization": f"Bearer {accessToken}", "Client-Id": clientID})
+                response = requests.get("https://api.twitch.tv/helix/moderation/moderators?broadcaster_id=" + getBroadcasterId(yourChannelName),headers={"Authorization": f"Bearer {accessToken}", "Client-Id": clientID})
+                modIds = []
+                for mod in response.json().get("data"):
+                    modIds += [mod.get("user_id")]
                 connected = True
             else:
                 sleep(5)
