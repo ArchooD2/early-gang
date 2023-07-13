@@ -63,6 +63,10 @@ class Bot(commands.Bot):
         await ctx.send("[bot] https://tiltify.com/@early-gang/profile")
 
     @commands.command()
+    async def playlist(self, ctx: commands.Context):
+        await ctx.send("[bot] https://open.spotify.com/playlist/0GhV1AmrhugyYsCb8gEHsS?si=02930e0a7cd54a03")
+
+    @commands.command()
     async def song(self, ctx: commands.Context):
 
         # create access token
