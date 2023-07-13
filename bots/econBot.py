@@ -163,8 +163,30 @@ class Bot(commands.Bot):
                 minutes, seconds = divmod(seconds, 60)
                 hours, minutes = divmod(minutes, 60)
                 days, hours = divmod(hours, 24)
+                weeks, days = divmod(days, 7)
+                months, weeks = divmod(weeks, 4)
+                years, months = divmod(months, 12)
+                centuries, years = divmod(years, 100)
 
-                await ctx.send("[bot] " + ctx.author.name + " has watched " + yourChannelName + " for " + str(days) + " days " + str(hours) + " hours " + str(minutes) + " minutes and " + str(seconds) + " seconds")
+                duration = ""
+                if centuries > 0:
+                    duration += str(centuries) + " centuries "
+                if years > 0:
+                    duration += str(years) + " years "
+                if months > 0:
+                    duration += str(months) + " months "
+                if weeks > 0:
+                    duration += str(weeks) + " weeks "
+                if days > 0:
+                    duration += str(days) + " days "
+                if hours > 0:
+                    duration += str(hours) + " hours "
+                if minutes > 0:
+                    duration += str(minutes) + " minutes "
+                if seconds > 0:
+                    duration += str(seconds) + " seconds"
+
+                await ctx.send("[bot] " + ctx.author.name + " has watched " + yourChannelName + " for " + duration)
                 break
 
     # tells the user how many points they have
@@ -174,11 +196,11 @@ class Bot(commands.Bot):
         global readingFile
         global appendingFile
 
-        # checks each row for id and if so retrieves the associated watchtime and sends it
+        # checks each row for id and if so retrieves the associated points and sends it
         rows = readFile()
         for row in rows:
             if row[0] == str(getBroadcasterId(ctx.author.name)):
-                await ctx.send("[bot] " + ctx.author.name + " has " + str(round(float(row[2]))) + " basement pesos")
+                await ctx.send("[bot] " + ctx.author.name + " has " + f"{round(float(row[2])):,}" + " basement pesos")
                 break
 
 
@@ -376,13 +398,13 @@ class Bot(commands.Bot):
                                 rateLimit = response.headers.get("Ratelimit-Remaining")
                                 if rateLimit != "0":
                                     response = requests.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + getBroadcasterId(yourChannelName) + "&moderator_id=" + getBroadcasterId(yourChannelName), headers = {"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json = {"data": {"user_id": user[0], "reason": "you got shot", "duration": time}})
+                                    await ctx.send("[bot] " + ctx.author.name +  " " + pastTenseActions[randint(0, len(pastTenseActions)-1)] + " " + user[1] + " with " + items[randint(0, len(items)-1)])
                                     connected = True
                                 else:
                                     sleep(5)
                             except:
                                 sleep(5)
 
-                        await ctx.send("[bot] " + ctx.author.name +  " " + pastTenseActions[randint(0, len(pastTenseActions)-1)] + " " + user[1] + " with " + items[randint(0, len(items)-1)])
                         if ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
                             row[2] = int(row[2]) - 1000
                             writeFile(rows)
