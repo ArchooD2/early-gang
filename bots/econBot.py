@@ -318,7 +318,7 @@ class Bot(commands.Bot):
 
     @commands.command()
     async def bpShop(self, ctx: commands.Context):
-        await ctx.send("[bot] !shoot (2000), !shootSnack (2000), !swapSnack (1000)")
+        await ctx.send("[bot] !shoot (1000), !shootSnack (1000), !swapSnack (500)")
 
     # times out user
     @commands.command()
@@ -348,7 +348,7 @@ class Bot(commands.Bot):
             rows = readFile()
             for row in rows:
                 if row[0] == str(getBroadcasterId(ctx.author.name)):
-                    if int(row[2]) < 2000 and ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
+                    if int(row[2]) < 1000 and ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
                         await ctx.send("[bot] not enough basement pesos")
                     else:
                         connected = False
@@ -384,7 +384,7 @@ class Bot(commands.Bot):
 
                         await ctx.send("[bot] " + ctx.author.name +  " " + pastTenseActions[randint(0, len(pastTenseActions)-1)] + " " + user[1] + " with " + items[randint(0, len(items)-1)])
                         if ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
-                            row[2] = int(row[2]) - 2000
+                            row[2] = int(row[2]) - 1000
                             writeFile(rows)
 
                         if user[0] in modIds:
@@ -396,7 +396,7 @@ class Bot(commands.Bot):
             rows = readFile()
             for row in rows:
                 if row[0] == str(getBroadcasterId(ctx.author.name)):
-                    if int(row[2]) < 2000 and ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
+                    if int(row[2]) < 1000 and ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
                         await ctx.send("[bot] not enough basement pesos")
                     else:
                         dice = randint(1, 100)
@@ -483,7 +483,7 @@ class Bot(commands.Bot):
 
                             finalId = id
                             if ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
-                                row[2] = int(row[2]) - 2000
+                                row[2] = int(row[2]) - 1000
                                 writeFile(rows)
 
                             if finalId in modIds:
@@ -496,14 +496,14 @@ class Bot(commands.Bot):
         rows = readFile()
         for row in rows:
             if row[0] == str(getBroadcasterId(ctx.author.name)):
-                if int(row[2]) < 2000 and ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
+                if int(row[2]) < 1000 and ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
                     await ctx.send("[bot] not enough basement pesos")
                 else:
                     chatPlays.snackShot = True
                     await ctx.send("[bot] " + ctx.author.name + " " +  pastTenseActions[randint(0, len(pastTenseActions)-1)] + " " + chatPlays.currentSnack + " snack with " + items[randint(0, len(items)-1)])
 
                     if ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
-                        row[2] = int(row[2]) - 2000
+                        row[2] = int(row[2]) - 1000
                         writeFile(rows)
                         asyncio.create_task(snackWait())
                 break
@@ -514,14 +514,14 @@ class Bot(commands.Bot):
         rows = readFile()
         for row in rows:
             if row[0] == str(getBroadcasterId(ctx.author.name)):
-                if int(row[2]) < 1000 and ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
+                if int(row[2]) < 500 and ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
                     await ctx.send("[bot] not enough basement pesos")
                 else:
                     chatPlays.currentSnack = snacks[randint(0, len(snacks) - 1)]
                     await ctx.send("[bot] " + chatPlays.currentSnack + " snack was swapped in")
 
                     if ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
-                        row[2] = int(row[2]) - 1000
+                        row[2] = int(row[2]) - 500
                         writeFile(rows)
                 break
 
