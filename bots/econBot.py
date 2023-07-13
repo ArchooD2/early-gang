@@ -4,6 +4,7 @@
 
 
 import threading
+import asyncio
 import csv
 from twitchio.ext import commands
 from libraries.autoStream import *
@@ -248,9 +249,7 @@ class Bot(commands.Bot):
                     rows = readFile()
                     for row in rows:
                         if row[0] == str(getBroadcasterId(ctx.message.content[0])):
-                            print(row[2])
                             row[2] = int(row[2]) + int(ctx.message.content[1])
-                            print(row[2])
                             await ctx.send("[bot] gave " + ctx.message.content[0] + " " + ctx.message.content[1] + " basement pesos")
                             break
                     writeFile(rows)
@@ -262,7 +261,10 @@ class Bot(commands.Bot):
                 ctx.message.content = ctx.message.content.replace("!giveBp ", "")
                 ctx.message.content = ctx.message.content.split(", ")
 
-                if getBroadcasterId(ctx.author.name) != "" and getBroadcasterId(ctx.message.content[0]) != "":
+                if int(ctx.message.content[1]) < 0:
+                    await ctx.send("[bot] nice try ")
+
+                elif getBroadcasterId(ctx.author.name) != "" and getBroadcasterId(ctx.message.content[0]) != "":
                     # updating points
                     rows = readFile()
                     foundTaker = False
@@ -485,8 +487,7 @@ class Bot(commands.Bot):
                                 writeFile(rows)
 
                             if finalId in modIds:
-                                remodThread = threading.Thread(target=remod(finalId, time))
-                                remodThread.start()
+                                asyncio.create_task(remod(finalId, time))
                     break
 
     # disables input bot for 10 to 30 minutes
@@ -504,11 +505,8 @@ class Bot(commands.Bot):
                     if ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
                         row[2] = int(row[2]) - 2000
                         writeFile(rows)
-                    break
-
-                    waitThread = threading.Thread(target=snackWait)
-                    waitThread.start()
-
+                        asyncio.create_task(snackWait())
+                break
 # changes input bot type
     @commands.command()
     async def swapSnack(self, ctx: commands.Context):
@@ -525,7 +523,7 @@ class Bot(commands.Bot):
                     if ctx.author.name != "dougdoug" and ctx.author.name != "parkzer" and ctx.author.name != "fizzeghost" and ctx.author.name != "sna1l_boy":
                         row[2] = int(row[2]) - 1000
                         writeFile(rows)
-                    break
+                break
 
 # as soon as bot is logged in constantly check the array and update watch time and points
 def updateWatchTime():
@@ -560,26 +558,31 @@ def updateWatchTime():
         sleep(1)
 
 # thread to wait to restart input bot
-def snackWait():
-    sleep(randint(600, 1800))
+async def snackWait():
+    await asyncio.sleep(randint(600, 1800))
     chatPlays.snackShot = False
 
-def remod(id, time):
-    sleep(time)
+async def remod(id, time):
+    await asyncio.sleep(time+5)
     modIds = []
-    connected = False
-    while not connected and id not in modIds:
-        try:
-            response = requests.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": f"Bearer {accessToken}"})
-            rateLimit = response.headers.get("Ratelimit-Remaining")
-            if rateLimit != "0":
-                response = requests.get("https://api.twitch.tv/helix/moderation/moderators?broadcaster_id=" + getBroadcasterId(yourChannelName) + "&user_id=" + id ,headers={"Authorization": f"Bearer {accessToken}", "Client-Id": clientID})
-                response = requests.get("https://api.twitch.tv/helix/moderation/moderators?broadcaster_id=" + getBroadcasterId(yourChannelName),headers={"Authorization": f"Bearer {accessToken}", "Client-Id": clientID})
-                modIds = []
-                for mod in response.json().get("data"):
-                    modIds += [mod.get("user_id")]
-                connected = True
-            else:
-                sleep(5)
-        except:
-            sleep(5)
+
+    while str(id) not in modIds:
+        connected = False
+        while not connected:
+            try:
+                response = requests.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": f"Bearer {accessToken}"})
+                rateLimit = response.headers.get("Ratelimit-Remaining")
+                if rateLimit != "0":
+                    print(id)
+                    response = requests.get("https://api.twitch.tv/helix/moderation/moderators?broadcaster_id=" + getBroadcasterId(yourChannelName) + "&user_id=" + id ,headers={"Authorization": f"Bearer {accessToken}", "Client-Id": clientID})
+                    print(response.json())
+                    response = requests.get("https://api.twitch.tv/helix/moderation/moderators?broadcaster_id=" + getBroadcasterId(yourChannelName),headers={"Authorization": f"Bearer {accessToken}", "Client-Id": clientID})
+                    print(response.json())
+                    modIds = []
+                    for mod in response.json().get("data"):
+                        modIds += [str(mod.get("user_id"))]
+                    connected = True
+                else:
+                    await asyncio.sleep(5)
+            except:
+                await asyncio.sleep(5)
