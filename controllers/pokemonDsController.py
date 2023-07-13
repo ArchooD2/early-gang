@@ -45,9 +45,9 @@ def idleBot():
                         wander()
 
 def inputBot():
-    pressTime = .3
     holdTime = 5
-    lightPressTime = .03
+    pressTime = (randint(1, 3) / 10)
+    lightPressTime = (randint(1, 3) / 100)
 
     while chatPlays.inputBotPlaying:
         if not chatPlays.snackShot:
@@ -323,7 +323,7 @@ def controller(data):
         if dice == 1:
             message = data["message"].lower()
             pressTime = (randint(1, 3) / 10)
-            lightPressTime = (randint(5, 11) / 100)
+            lightPressTime = (randint(1, 3) / 100)
             holdTime = 5
             dice = randint(1, 40)
             # 2.5% chance of random input
