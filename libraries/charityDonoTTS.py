@@ -1,3 +1,6 @@
+# uses the tilitfy api to speak and display text in obs whenever someone donates
+
+# imports
 from obswebsocket import obsws
 from obswebsocket import requests as obwsrequests
 from libraries.autoStream import *
@@ -8,12 +11,11 @@ import pyttsx3
 import pyautogui
 import configparser
 import requests
-from datetime import datetime
 
-
+# setting up variables
 ws = None
 ttsOn = False
-lastDonation = []
+lastDonation = ""
 screenWidth, screenHeight = pyautogui.size()
 
 # reading config
@@ -23,17 +25,16 @@ websocketPassword = config.get("obs", "websocket server password")
 clientID = config.get("tiltify", "client id")
 clientSecret = config.get("tiltify", "client secret")
 code = config.get("tiltify", "code")
+refreshToken = config.get("tiltify", "tiltify refresh token")
 
-# checking for refresh token
-refreshToken = config.get("tiltify", "refresh token")
+# making token and writing to file if needed
 if refreshToken == "":
-    response = requests.post("https://v5api.tiltify.com/oauth/token", data = {"grant_type": "authorization_code", "client_id": clientID, "client_secret": clientSecret, "redirect_uri": 'https://localhost/', "code": code})
-    # writing response to file
-    with open(os.path.abspath((os.path.join(directory, "config.ini"))), 'r') as file:
+    response = requests.post("https://v5api.tiltify.com/oauth/token", data = {"grant_type": "authorization_code", "client_id": clientID, "client_secret": clientSecret, "redirect_uri": "https://localhost/", "code": code})
+    with open(os.path.abspath((os.path.join(directory, "config.ini"))), "r") as file:
         lines = file.readlines()
     for i, line in enumerate(lines):
-        if line.startswith("refresh token ="):
-            lines[i] = "refresh token = " + response.json().get("refresh_token") + "\n"
+        if line.startswith("tiltify refresh token ="):
+            lines[i] = "tiltify refresh token = " + response.json().get("refresh_token") + "\n"
             break
     with open(os.path.abspath((os.path.join(directory, "config.ini"))), 'w') as file:
         file.writelines(lines)
@@ -44,33 +45,41 @@ def connectToObs():
     ws = obsws("localhost", 4444, websocketPassword)
     ws.connect()
 
-#finds the scene where the tts is located
-def getScene():
+# closing obs connection
+def disconnectFromObs():
+    global ws
+    ws.disconnect()
+
+# finds the scene where the given source name is located
+def getScene(source):
     global ws
     headerFound = False
     bodyFound = False
 
     # get scene names
     sceneData = ws.call(obwsrequests.GetSceneList())
+
+    # loop through each scene
     for scene in sceneData.getScenes():
         name = scene.get("name")
-        # loop through each scene to find which scene has the tts sources
         itemData = ws.call(obwsrequests.GetSceneItemList(sceneName = name))
-        for item in itemData.getSceneItems():
-            if item.get("sourceName") == "tts header":
-                headerFound = True
-                break
-        for item in itemData.getSceneItems():
-            if item.get("sourceName") == "tts body":
-                bodyFound = True
-                break
 
-        # when both are found return current scene
-        if headerFound and bodyFound:
-            return name
+        # loop through all scene items
+        for item in itemData.getSceneItems():
+            if item.get("sourceName") == source:
+
+                # return the source whose name matches the given one
+                return name
+
 
 # takes donation info and tells obs to display it
 def donationAlert(name, amount, charity, message):
+
+    # prepping engine
+    engine = pyttsx3.init()
+    rate = engine.getProperty("rate")
+    engine.setProperty("rate", rate - 80)
+
     # format message into lines
     lineLength = len(f"{name} donated ${amount} to {charity}")
     words = message.split()
@@ -99,29 +108,25 @@ def donationAlert(name, amount, charity, message):
     time.sleep(2)
 
     # change source positions based on text size
-    response = ws.call(obwsrequests.GetSceneItemProperties(sceneName = getScene(), item = "tts header"))
+    response = ws.call(obwsrequests.GetSceneItemProperties(sceneName = getScene("tts header"), item = "tts header"))
     headerWidth = response.getWidth()
     headerHeight = response.getHeight()
-    response = ws.call(obwsrequests.GetSceneItemProperties(sceneName = getScene(), item = "tts body"))
+    response = ws.call(obwsrequests.GetSceneItemProperties(sceneName = getScene("tts body"), item = "tts body"))
     bodyWidth = response.getWidth()
-    ws.call(obwsrequests.SetSceneItemProperties(sceneName= getScene(), item = "tts header", position = {"x": screenWidth - headerWidth - 50, "y": 50}))
-    ws.call(obwsrequests.SetSceneItemProperties(sceneName=getScene(), item="tts body", position = {"x": (screenWidth - headerWidth) + (headerWidth - bodyWidth)/2 - 50, "y": 50 + headerHeight}))
-
+    ws.call(obwsrequests.SetSceneItemProperties(sceneName= getScene("tts header"), item = "tts header", position = {"x": (screenWidth - headerWidth - 50), "y": 50}))
+    ws.call(obwsrequests.SetSceneItemProperties(sceneName = getScene("tts body"), item="tts body", position = {"x": (screenWidth - headerWidth) + (headerWidth - bodyWidth)/2 - 50, "y": 50 + headerHeight}))
 
     # tell obs to show sources
-    ws.call(obwsrequests.SetSceneItemProperties(sceneName=getScene(), item="tts body", visible=True))
-    ws.call(obwsrequests.SetSceneItemProperties(sceneName=getScene(), item="tts header", visible=True))
+    ws.call(obwsrequests.SetSceneItemProperties(sceneName = getScene("tts body"), item = "tts body", visible = True))
+    ws.call(obwsrequests.SetSceneItemProperties(sceneName = getScene("tts header"), item = "tts header", visible = True))
 
     # speak message
-    engine = pyttsx3.init()
-    rate = engine.getProperty('rate')
-    engine.setProperty('rate', rate - 80)
     engine.say(message)
     engine.runAndWait()
 
     # tell obs to hide sources
-    ws.call(obwsrequests.SetSceneItemProperties(sceneName=getScene(), item="tts body", visible=False))
-    ws.call(obwsrequests.SetSceneItemProperties(sceneName=getScene(), item="tts header", visible=False))
+    ws.call(obwsrequests.SetSceneItemProperties(sceneName = getScene("tts body"), item = "tts body", visible = False))
+    ws.call(obwsrequests.SetSceneItemProperties(sceneName = getScene("tts header"), item ="tts header", visible = False))
 
 # starts taking and displaying tts messages
 def startTTS():
@@ -148,6 +153,6 @@ def tts():
             ids += [[x.get("id"), x.get("name")]]
         for id in ids:
             donationData = requests.get("https://v5api.tiltify.com/api/public/campaigns/" + str(id[0]) + "/donations", headers = {"Authorization": "Bearer " + requests.post("https://v5api.tiltify.com/oauth/token",data={"client_id": clientID, "client_secret": clientSecret, "grant_type": "refresh_token", "refresh_token": refreshToken}).json().get("access_token")}).json().get("data")
-            if donationData != [] and donationData not in lastDonation:
-                lastDonation += [donationData]
+            if donationData != [] and donationData != lastDonation:
+                lastDonation = donationData
                 donationAlert(donationData[0].get("donor_name"), donationData[0].get("amount").get("value"), id[1], donationData[0].get("donor_comment"))
