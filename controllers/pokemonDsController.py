@@ -1,291 +1,286 @@
+# imports
+import random
+from controllers import pokemonGbaController
 from libraries import chatPlays
-from time import *
-from random import *
 from libraries.autoStream import *
-import requests
 
+# setting up variables
+pressTime = (random.randint(1, 3) / 10)
+lightPressTime = (random.randint(1, 3) / 100)
+holdTime = random.randint(5, 10)
+
+# reading config
+config = configparser.ConfigParser()
+config.read(os.path.abspath((os.path.join(directory, "config.ini"))))
+landmines = config.get("twitch", "landmines", fallback = "").strip("[]").split(", ")
+
+# makes inputs when no one has typed in chat for a while
 def idleBot():
+    
+    # checks if idle bot is supposed to be on and if no one has chatted
     while chatPlays.idleBotPlaying:
         if chatPlays.noRecentMessages:
+            
             # time between inputs
-            sleep(randint(1, 10) / 10)
-            pressTime = .3
-            dice = randint(1, 4)
+            sleep(random.randint(1, 10) / 10)
+            dice = random.randint(1, 4)
+
+            # 25% chance of non directionals
             if dice == 1:
-                dice = randint(1, 8)
+                dice = random.randint(1, 8)
                 match dice:
                     case 1:
-                        a(pressTime)
+                        pokemonGbaController.a(pressTime)
                     case 2:
-                        b(pressTime)
+                        pokemonGbaController.b(pressTime)
                     case 3:
                         x(pressTime)
                     case 4:
                         y(pressTime)
                     case 5:
-                        select(pressTime)
+                        pokemonGbaController.select(pressTime)
                     case 6:
-                        start(pressTime)
+                        pokemonGbaController.start(pressTime)
                     case 7:
                         l(pressTime)
                     case 8:
                         r(pressTime)
+                    
+            # 75% chance of directionals
             else:
-                dice = randint(1, 5)
+                dice = random.randint(1, 5)
                 match dice:
                     case 1:
-                        up(pressTime)
+                        pokemonGbaController.up(pressTime)
                     case 2:
-                        down(pressTime)
+                        pokemonGbaController.down(pressTime)
                     case 3:
-                        left(pressTime)
+                        pokemonGbaController.left(pressTime)
                     case 4:
-                        right(pressTime)
+                        pokemonGbaController.right(pressTime)
                     case 5:
-                        wander()
+                        pokemonGbaController.wander(4, holdTime)
 
+# makes inputs every so often
 def inputBot():
-    holdTime = 5
-    pressTime = (randint(1, 3) / 10)
-    lightPressTime = (randint(1, 3) / 100)
 
+    # checks if conditions are right
     while chatPlays.inputBotPlaying:
         if not chatPlays.snackShot:
 
+            # sleepy snack controls
             if chatPlays.currentSnack == "sleepy":
+                
                 # time between inputs
-                sleep(randint(60, 360))
-                dice = randint(1, 100)
+                sleep(random.randint(60, 360))
+                dice = random.randint(1, 100)
 
                 # 5% chance of no action
                 if dice < 96:
-                    dice = randint(1, 17)
+                    dice = random.randint(1, 19)
                     match dice:
                         case 1:
-                            up(pressTime)
+                            pokemonGbaController.up(pressTime)
                         case 2:
-                            down(pressTime)
+                            pokemonGbaController.down(pressTime)
                         case 3:
-                            left(pressTime)
+                            pokemonGbaController.left(pressTime)
                         case 4:
-                            right(pressTime)
+                            pokemonGbaController.right(pressTime)
                         case 5:
-                            holdUp(holdTime)
+                            pokemonGbaController.holdUp(holdTime)
                         case 6:
-                            holdDown(holdTime)
+                            pokemonGbaController.holdDown(holdTime)
                         case 7:
-                            holdLeft(holdTime)
+                            pokemonGbaController.holdLeft(holdTime)
                         case 8:
-                            holdDown(holdTime)
+                            pokemonGbaController.holdDown(holdTime)
                         case 9:
-                            a(pressTime)
+                            pokemonGbaController.a(pressTime)
                         case 10:
-                            holdA(holdTime)
+                            pokemonGbaController.holdA(holdTime)
                         case 11:
-                            b(pressTime)
+                            pokemonGbaController.b(pressTime)
                         case 12:
-                            holdB()
+                            pokemonGbaController.holdB()
                         case 13:
                             x(pressTime)
                         case 14:
                             y(pressTime)
                         case 15:
-                            select(pressTime)
+                            l(pressTime)
                         case 16:
-                            start(pressTime)
-
-                        # reduced wander
+                            r(pressTime)
                         case 17:
-                            for num in range(2):
-                                dice = randint(1, 4)
-                                match dice:
-                                    case 1:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
-                                    case 2:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
-                                    case 3:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
-                                    case 4:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
+                            pokemonGbaController.select(pressTime)
+                        case 18:
+                            pokemonGbaController.start(pressTime)
+                        case 19:
+                            pokemonGbaController.wander(2, holdTime)
 
+            # chris snack controls
             elif chatPlays.currentSnack == "chris":
+                
                 # time between inputs
-                sleep(randint(10, 60))
-                dice = randint(1, 3)
+                time.sleep(random.randint(10, 60))
+                dice = random.randint(1, 3)
 
                 # 33% chance of no action
-                if dice == 1 or dice == 2:
-                    dice = randint(1, 17)
+                if dice != 1:
+                    dice = random.randint(1, 19)
                     match dice:
                         case 1:
-                            up(pressTime)
+                            pokemonGbaController.up(pressTime)
                         case 2:
-                            down(pressTime)
+                            pokemonGbaController.down(pressTime)
                         case 3:
-                            left(pressTime)
+                            pokemonGbaController.left(pressTime)
                         case 4:
-                            right(pressTime)
+                            pokemonGbaController.right(pressTime)
                         case 5:
-                            holdUp(holdTime)
+                            pokemonGbaController.holdUp(holdTime)
                         case 6:
-                            holdDown(holdTime)
+                            pokemonGbaController.holdDown(holdTime)
                         case 7:
-                            holdLeft(holdTime)
+                            pokemonGbaController.holdLeft(holdTime)
                         case 8:
-                            holdDown(holdTime)
+                            pokemonGbaController.holdDown(holdTime)
                         case 9:
-                            a(pressTime)
+                            pokemonGbaController.a(pressTime)
                         case 10:
-                            holdA(holdTime)
+                            pokemonGbaController.holdA(holdTime)
                         case 11:
-                            b(pressTime)
+                            pokemonGbaController.b(pressTime)
                         case 12:
-                            holdB()
+                            pokemonGbaController.holdB()
                         case 13:
                             x(pressTime)
                         case 14:
                             y(pressTime)
                         case 15:
-                            select(pressTime)
+                            l(pressTime)
                         case 16:
-                            start(pressTime)
-
-                        # reduced wander
+                            r(pressTime)
                         case 17:
-                            for num in range(2):
-                                dice = randint(1, 4)
-                                match dice:
-                                    case 1:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
-                                    case 2:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
-                                    case 3:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
-                                    case 4:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
-
+                            pokemonGbaController.select(pressTime)
+                        case 18:
+                            pokemonGbaController.start(pressTime)
+                        case 19:
+                            pokemonGbaController.wander(2, holdTime)
+                        
+            # burst snack controls
             elif chatPlays.currentSnack == "burst":
+                
                 # time between inputs
-                sleep(300)
-                dice = randint(1, 10)
+                time.sleep(300)
+                dice = random.randint(1, 10)
 
                 # 10% chance of no action
                 if dice != 1:
                     for i in range(5):
-                        dice = randint(1, 17)
+                        dice = random.randint(1, 19)
                         match dice:
                             case 1:
-                                up(pressTime)
+                                pokemonGbaController.up(pressTime)
                             case 2:
-                                down(pressTime)
+                                pokemonGbaController.down(pressTime)
                             case 3:
-                                left(pressTime)
+                                pokemonGbaController.left(pressTime)
                             case 4:
-                                right(pressTime)
+                                pokemonGbaController.right(pressTime)
                             case 5:
-                                holdUp(holdTime)
+                                pokemonGbaController.holdUp(holdTime)
                             case 6:
-                                holdDown(holdTime)
+                                pokemonGbaController.holdDown(holdTime)
                             case 7:
-                                holdLeft(holdTime)
+                                pokemonGbaController.holdLeft(holdTime)
                             case 8:
-                                holdDown(holdTime)
+                                pokemonGbaController.holdDown(holdTime)
                             case 9:
-                                a(pressTime)
+                                pokemonGbaController.a(pressTime)
                             case 10:
-                                holdA(holdTime)
+                                pokemonGbaController.holdA(holdTime)
                             case 11:
-                                b(pressTime)
+                                pokemonGbaController.b(pressTime)
                             case 12:
-                                holdB()
+                                pokemonGbaController.holdB()
                             case 13:
                                 x(pressTime)
                             case 14:
                                 y(pressTime)
                             case 15:
-                                select(pressTime)
+                                l(pressTime)
                             case 16:
-                                start(pressTime)
-
-                            # reduced wander
+                                r(pressTime)
                             case 17:
-                                for num in range(2):
-                                    dice = randint(1, 4)
-                                    match dice:
-                                        case 1:
-                                            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
-                                        case 2:
-                                            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
-                                        case 3:
-                                            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
-                                        case 4:
-                                            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
+                                pokemonGbaController.select(pressTime)
+                            case 18:
+                                pokemonGbaController.start(pressTime)
+                            case 19:
+                                pokemonGbaController.wander(2, holdTime)
 
+            # silly snack controls
             elif chatPlays.currentSnack == "silly":
+                
                 # time between inputs
-                sleep(randint(10, 40))
-                dice = randint(1, 3)
+                time.sleep(random.randint(10, 40))
+                dice = random.randint(1, 3)
 
                 # 33% chance of no action
                 if dice != 1:
-                    dice = randint(1, 9)
+                    dice = random.randint(1, 9)
                     match dice:
                         case 1:
-                            up(pressTime)
+                            pokemonGbaController.up(pressTime)
                         case 2:
-                            down(pressTime)
+                            pokemonGbaController.down(pressTime)
                         case 3:
-                            left(pressTime)
+                            pokemonGbaController.left(pressTime)
                         case 4:
-                            right(pressTime)
+                            pokemonGbaController.right(pressTime)
                         case 5:
-                            holdUp(holdTime)
+                            pokemonGbaController.holdUp(holdTime)
                         case 6:
-                            holdDown(holdTime)
+                            pokemonGbaController.holdDown(holdTime)
                         case 7:
-                            holdLeft(holdTime)
+                            pokemonGbaController.holdLeft(holdTime)
                         case 8:
-                            holdDown(holdTime)
-                        # reduced wander
+                            pokemonGbaController.holdDown(holdTime)
                         case 9:
-                            for num in range(2):
-                                dice = randint(1, 4)
-                                match dice:
-                                    case 1:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
-                                    case 2:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
-                                    case 3:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
-                                    case 4:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
-
+                            pokemonGbaController.wander(2, holdTime)
+            
+            # cautious snack controls
             elif chatPlays.currentSnack == "cautious":
+                
                 # time between inputs
-                sleep(randint(10, 60))
-                dice = randint(1, 5)
+                time.sleep(random.randint(10, 60))
+                dice = random.randint(1, 5)
 
                 # 20% chance of no action
                 if dice != 1:
-                    dice = randint(1, 17)
+                    dice = random.randint(1, 6)
                     match dice:
                         case 1:
-                            north(lightPressTime)
+                            pokemonGbaController.north(lightPressTime)
                         case 2:
-                            south(lightPressTime)
+                            pokemonGbaController.south(lightPressTime)
                         case 3:
-                            east(lightPressTime)
+                            pokemonGbaController.east(lightPressTime)
                         case 4:
-                            west(lightPressTime)
+                            pokemonGbaController.west(lightPressTime)
                         case 5:
-                            b(pressTime)
+                            pokemonGbaController.b(pressTime)
                         case 6:
-                            mashB(pressTime)
+                            pokemonGbaController.mashB(pressTime)
 
+# chat controls
 def controller(data):
+    
+    # makes sure chat is playing
     chatPlays.noRecentMessages = False
     if chatPlays.chatPlaying is True:
 
+        # getting current viewer count
         connected = False
         while not connected:
             try:
@@ -296,457 +291,243 @@ def controller(data):
                     streamResponse = requests.get(f'https://api.twitch.tv/helix/streams?user_id={userResponse.get("data")[0].get("id")}', headers={"Client-ID": chatPlays.clientID, "Authorization": "Bearer " + chatPlays.accessToken}).json()
                     connected = True
                 else:
-                    sleep(5)
+                    time.sleep(5)
             except:
-                sleep(5)
+                time.sleep(5)
 
-        dice = 1
-        connected = False
-        while not connected:
-            try:
-                if int(streamResponse.get("data")[0].get("viewer_count")) > 100:
-                    dice = (randint(1, 10))
-                elif int(streamResponse.get("data")[0].get("viewer_count")) > 50:
-                    dice = randint(1, 5)
-                elif int(streamResponse.get("data")[0].get("viewer_count")) > 35:
-                    dice = randint(1, 5)
-                    if dice == 1 or dice == 2:
-                        dice = 1
-                elif int(streamResponse.get("data")[0].get("viewer_count")) > 20:
-                    dice = (randint(1, 4))
-                    if dice != 1:
-                        dice = 1
-                connected = True
-            except:
-                sleep(1)
-
+        # setting up odds based on view count
+        try:
+            if int(streamResponse.get("data")[0].get("viewer_count")) > 100:
+                dice = (random.randint(1, 10))
+            elif int(streamResponse.get("data")[0].get("viewer_count")) > 50:
+                dice = random.randint(1, 5)
+            elif int(streamResponse.get("data")[0].get("viewer_count")) > 35:
+                dice = random.randint(1, 5)
+                if dice == 1 or dice == 2:
+                    dice = 1
+            elif int(streamResponse.get("data")[0].get("viewer_count")) > 20:
+                dice = (random.randint(1, 4))
+                if dice != 1:
+                    dice = 1
+            else:
+                dice = 1
+        except:
+            dice = 1
+        
+        # making input
         if dice == 1:
             message = data["message"].lower()
-            pressTime = (randint(1, 3) / 10)
-            lightPressTime = (randint(1, 3) / 100)
-            holdTime = 5
-            dice = randint(1, 40)
+            dice = random.randint(1, 40)
+            
             # 2.5% chance of random input
             if dice == 1:
-                dice = randint(1, 30)
+                dice = random.randint(1, 30)
                 match dice:
                     case 1:
-                        up(pressTime)
+                        pokemonGbaController.up(pressTime)
                     case 2:
-                        down(pressTime)
+                        pokemonGbaController.down(pressTime)
                     case 3:
-                        left(pressTime)
+                        pokemonGbaController.left(pressTime)
                     case 4:
-                        right(pressTime)
+                        pokemonGbaController.right(pressTime)
                     case 5:
-                        holdUp(holdTime)
+                        pokemonGbaController.holdUp(holdTime)
                     case 6:
-                        holdDown(holdTime)
+                        pokemonGbaController.holdDown(holdTime)
                     case 7:
-                        holdLeft(holdTime)
+                        pokemonGbaController.holdLeft(holdTime)
                     case 8:
-                        holdRight(holdTime)
+                        pokemonGbaController.holdRight(holdTime)
                     case 9:
-                        a(pressTime)
+                        pokemonGbaController.a(pressTime)
                     case 10:
-                        holdA(holdTime)
+                        pokemonGbaController.holdA(holdTime)
                     case 11:
-                        mashA(pressTime)
+                        pokemonGbaController.mashA(pressTime)
                     case 12:
-                        b(pressTime)
+                        pokemonGbaController.b(pressTime)
                     case 13:
-                        holdB()
+                        pokemonGbaController.holdB()
                     case 14:
-                        mashB(pressTime)
+                        pokemonGbaController.mashB(pressTime)
                     case 15:
                         x(pressTime)
                     case 16:
                         y(pressTime)
                     case 17:
-                        select(pressTime)
+                        pokemonGbaController.select(pressTime)
                     case 18:
-                        start(pressTime)
+                        pokemonGbaController.start(pressTime)
                     case 19:
                         l(pressTime)
                     case 20:
                         r(pressTime)
                     case 21:
-                        stop()
+                        pokemonGbaController.stop()
                     case 22:
-                        wander()
+                        pokemonGbaController.wander(4, holdTime)
                     case 23:
-                        north(lightPressTime)
+                        pokemonGbaController.north(lightPressTime)
                     case 24:
-                        south(lightPressTime)
+                        pokemonGbaController.south(lightPressTime)
                     case 25:
-                        west(lightPressTime)
+                        pokemonGbaController.west(lightPressTime)
                     case 26:
-                        east(lightPressTime)
+                        pokemonGbaController.east(lightPressTime)
                     case 27:
-                        upWander()
+                        pokemonGbaController.upWander(holdTime)
                     case 28:
-                        downWander()
+                        pokemonGbaController.downWander(holdTime)
                     case 29:
-                        leftWander()
+                        pokemonGbaController.leftWander(holdTime)
                     case 30:
-                        rightWander()
+                        pokemonGbaController.rightWander(holdTime)
+            
             # 2.5% chance of opposite input
             elif dice == 2:
                 if message == "a":
-                    b(pressTime)
+                    pokemonGbaController.b(pressTime)
                 elif "hold a" in message:
-                    holdB()
+                    pokemonGbaController.holdB()
                 elif "mash a" in message:
-                    mashB(pressTime)
+                    pokemonGbaController.mashB(pressTime)
                 elif message == "b":
-                    a(pressTime)
+                    pokemonGbaController.a(pressTime)
                 elif "hold b" in message:
-                    holdA(holdTime)
+                    pokemonGbaController.holdA(holdTime)
                 elif "mash b" in message:
-                    mashA(pressTime)
+                    pokemonGbaController.mashA(pressTime)
                 elif message == "x":
                     y(pressTime)
                 elif message == "y":
                     x(pressTime)
                 elif "select" in message:
-                    start(pressTime)
+                    pokemonGbaController.start(pressTime)
                 elif "start" in message:
-                    select(pressTime)
+                    pokemonGbaController.select(pressTime)
                 elif message == "l":
                     r(pressTime)
                 elif message == "r":
                     l(pressTime)
                 elif "up wander" in message:
-                    downWander()
+                    pokemonGbaController.downWander(holdTime)
                 elif "down wander" in message:
-                    upWander()
+                    pokemonGbaController.upWander(holdTime)
                 elif "left wander" in message:
-                    rightWander()
+                    pokemonGbaController.rightWander(holdTime)
                 elif "right wander" in message:
-                    leftWander()
+                    pokemonGbaController.leftWander(holdTime)
                 elif "wander" in message:
-                    stop()
+                    pokemonGbaController.stop()
                 elif "hold up" in message:
-                    holdDown(holdTime)
+                    pokemonGbaController.holdDown(holdTime)
                 elif "hold down" in message:
-                    holdUp(holdTime)
+                    pokemonGbaController.holdUp(holdTime)
                 elif "hold left" in message:
-                    holdRight(holdTime)
+                    pokemonGbaController.holdRight(holdTime)
                 elif "hold right" in message:
-                    holdLeft(holdTime)
+                    pokemonGbaController.holdLeft(holdTime)
                 elif "north" in message:
-                    south(lightPressTime)
+                    pokemonGbaController.south(lightPressTime)
                 elif "south" in message:
-                    north(lightPressTime)
+                    pokemonGbaController.north(lightPressTime)
                 elif "west" in message:
-                    east(lightPressTime)
+                    pokemonGbaController.east(lightPressTime)
                 elif "east" in message:
-                    west(lightPressTime)
+                    pokemonGbaController.west(lightPressTime)
                 elif "up" in message:
-                    down(pressTime)
+                    pokemonGbaController.down(pressTime)
                 elif "down" in message:
-                    up(pressTime)
+                    pokemonGbaController.up(pressTime)
                 elif "left" in message:
-                    right(pressTime)
+                    pokemonGbaController.right(pressTime)
                 elif "right" in message:
-                    left(pressTime)
+                    pokemonGbaController.left(pressTime)
                 elif "stop" in message:
-                    upWander()
-                    downWander()
-                    leftWander()
-                    rightWander()
-                elif chatPlays.landmines[0] in message or chatPlays.landmines[1] in message or chatPlays.landmines[2] in message or chatPlays.landmines[3] in message or chatPlays.landmines[4] in message:
-                    stop()
+                    pokemonGbaController.upWander(holdTime)
+                    pokemonGbaController.downWander(holdTime)
+                    pokemonGbaController.leftWander(holdTime)
+                    pokemonGbaController.rightWander(holdTime)
+                elif landmines[0] in message or landmines[1] in message or landmines[2] in message or landmines[3] in message or landmines[4] in message:
+                    if chatPlays.landminesActive:
+                        pokemonGbaController.stop()
+            
             # 95% chance of correct inputs
             else:
                 if message == "a":
-                    a(pressTime)
+                    pokemonGbaController. a(pressTime)
                 elif "hold a" in message:
-                    holdA(holdTime)
+                    pokemonGbaController.holdA(holdTime)
                 elif "mash a" in message:
-                    mashA(pressTime)
+                    pokemonGbaController.mashA(pressTime)
                 elif message == "b":
-                    b(pressTime)
+                    pokemonGbaController.b(pressTime)
                 elif "hold b" in message:
-                    holdB()
+                    pokemonGbaController.holdB()
                 elif "mash b" in message:
-                    mashB(pressTime)
+                    pokemonGbaController.mashB(pressTime)
                 elif message == "x":
                     x(pressTime)
                 elif message == "y":
                     y(pressTime)
                 elif "select" in message:
-                    select(pressTime)
+                    pokemonGbaController.select(pressTime)
                 elif "start" in message:
-                    start(pressTime)
+                    pokemonGbaController.start(pressTime)
                 elif message == "l":
                     l(pressTime)
                 elif message == "r":
                     r(pressTime)
                 elif "up wander" in message:
-                    upWander()
+                    pokemonGbaController.upWander(holdTime)
                 elif "down wander" in message:
-                    downWander()
+                    pokemonGbaController.downWander(holdTime)
                 elif "left wander" in message:
-                    leftWander()
+                    pokemonGbaController.leftWander(holdTime)
                 elif "right wander" in message:
-                    rightWander()
+                    pokemonGbaController.rightWander(holdTime)
                 elif "wander" in message:
-                    wander()
+                    pokemonGbaController.wander(4, holdTime)
                 elif "hold up" in message:
-                    holdUp(holdTime)
+                    pokemonGbaController.holdUp(holdTime)
                 elif "hold down" in message:
-                    holdDown(holdTime)
+                    pokemonGbaController.holdDown(holdTime)
                 elif "hold left" in message:
-                    holdLeft(holdTime)
+                    pokemonGbaController.holdLeft(holdTime)
                 elif "hold right" in message:
-                    holdRight(holdTime)
+                    pokemonGbaController.holdRight(holdTime)
                 elif "north" in message:
-                    north(lightPressTime)
+                    pokemonGbaController.north(lightPressTime)
                 elif "south" in message:
-                    south(lightPressTime)
+                    pokemonGbaController.south(lightPressTime)
                 elif "west" in message:
-                    west(lightPressTime)
+                    pokemonGbaController.west(lightPressTime)
                 elif "east" in message:
-                    east(lightPressTime)
+                    pokemonGbaController.east(lightPressTime)
                 elif "up" in message:
-                    up(pressTime)
+                    pokemonGbaController.up(pressTime)
                 elif "down" in message:
-                    down(pressTime)
+                    pokemonGbaController.down(pressTime)
                 elif "left" in message:
-                    left(pressTime)
+                    pokemonGbaController.left(pressTime)
                 elif "right" in message:
-                    right(pressTime)
+                    pokemonGbaController.right(pressTime)
                 elif "stop" in message:
-                    stop()
-                elif chatPlays.landmines[0] in message or chatPlays.landmines[1] in message or chatPlays.landmines[2] in message or chatPlays.landmines[3] in message or chatPlays.landmines[4] in message:
-                    for num in range(2):
-                        dice = randint(1, 4)
-                        match dice:
-                            case 1:
-                                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
-                            case 2:
-                                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
-                            case 3:
-                                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
-                            case 4:
-                                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
+                    pokemonGbaController.stop()
+                elif landmines[0] in message or landmines[1] in message or landmines[2] in message or landmines[3] in message or landmines[4] in message:
+                    if chatPlays.landminesActive:
+                        pokemonGbaController.wander(2, holdTime)
 
 # define controls down here
-
-def a(pressTime):
-    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("L"), pressTime)
-
-def holdA(holdTime):
-    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("L"), holdTime)
-
-def mashA(pressTime):
-    mashTime = 0
-    while mashTime <= 2:
-        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("L"), pressTime)
-        mashTime += pressTime + .3
-        sleep(.3)
-
-def b(pressTime):
-    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("K"), pressTime)
-
-def holdB():
-    chatPlays.holdKey(chatPlays.keyCodes.get("K"))
-
-def mashB(pressTime):
-    mashTime = 0
-    while mashTime <= 2:
-        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("K"), pressTime)
-        mashTime += pressTime + .3
-        sleep(.3)
-
 def x(pressTime):
     chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("O"), pressTime)
 
 def y(pressTime):
     chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("V"), pressTime)
 
-def select(pressTime):
-    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("T"), pressTime)
-
-def start(pressTime):
-    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("G"), pressTime)
-
 def l(pressTime):
     chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("Q"), pressTime)
 
 def r(pressTime):
     chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("E"), pressTime)
-
-def wander():
-    for x in range(4):
-        dice = randint(1, 4)
-        match dice:
-            case 1:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
-            case 2:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
-            case 3:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
-            case 4:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
-
-def upWander():
-    for x in range(4):
-        dice = randint(1, 10)
-        if dice == 1 or dice == 2 or dice == 3 or dice == 4:
-            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
-        else:
-            dice = randint(1, 2)
-            if dice == 1:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
-            else:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
-
-def downWander():
-    for x in range(4):
-        dice = randint(1, 10)
-        if dice == 1 or dice == 2 or dice == 3 or dice == 4:
-            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
-        else:
-            dice = randint(1, 2)
-            if dice == 1:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
-            else:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
-
-def leftWander():
-    for x in range(4):
-        dice = randint(1, 10)
-        if dice == 1 or dice == 2 or dice == 3 or dice == 4:
-            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
-        else:
-            dice = randint(1, 2)
-            if dice == 1:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
-            else:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
-
-def rightWander():
-    for x in range(4):
-        dice = randint(1, 10)
-        if dice == 1 or dice == 2 or dice == 3 or dice == 4:
-            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
-        else:
-            dice = randint(1, 2)
-            if dice == 1:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
-            else:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
-
-def holdUp(holdTime):
-    dice = randint(1, 100)
-    if dice == 1:
-        for x in range(8):
-            dice = randint(1, 4)
-            match dice:
-                case 1:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
-                case 2:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
-                case 3:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
-                case 4:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
-    else:
-        chatPlays.releaseKey(chatPlays.keyCodes.get("S"))
-        chatPlays.releaseKey(chatPlays.keyCodes.get("A"))
-        chatPlays.releaseKey(chatPlays.keyCodes.get("D"))
-        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), holdTime)
-
-def holdDown(holdTime):
-    dice = randint(1, 100)
-    if dice == 1:
-        for x in range(8):
-            dice = randint(1, 4)
-            match dice:
-                case 1:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
-                case 2:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
-                case 3:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
-                case 4:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
-    else:
-        chatPlays.releaseKey(chatPlays.keyCodes.get("W"))
-        chatPlays.releaseKey(chatPlays.keyCodes.get("A"))
-        chatPlays.releaseKey(chatPlays.keyCodes.get("D"))
-        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), holdTime)
-
-def holdLeft(holdTime):
-    dice = randint(1, 100)
-    if dice == 1:
-        for x in range(8):
-            dice = randint(1, 4)
-            match dice:
-                case 1:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
-                case 2:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
-                case 3:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
-                case 4:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
-    else:
-        chatPlays.releaseKey(chatPlays.keyCodes.get("D"))
-        chatPlays.releaseKey(chatPlays.keyCodes.get("S"))
-        chatPlays.releaseKey(chatPlays.keyCodes.get("W"))
-        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), holdTime)
-
-def holdRight(holdTime):
-    dice = randint(1, 100)
-    if dice == 1:
-        for x in range(8):
-            dice = randint(1, 4)
-            match dice:
-                case 1:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
-                case 2:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
-                case 3:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
-                case 4:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
-    else:
-        chatPlays.releaseKey(chatPlays.keyCodes.get("A"))
-        chatPlays.releaseKey(chatPlays.keyCodes.get("W"))
-        chatPlays.releaseKey(chatPlays.keyCodes.get("S"))
-        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), holdTime)
-
-def north(lightPressTime):
-    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), lightPressTime)
-
-def south(lightPressTime):
-    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), lightPressTime)
-
-def west(lightPressTime):
-    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), lightPressTime)
-
-def east(lightPressTime):
-    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), lightPressTime)
-
-def up(pressTime):
-    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), pressTime)
-
-def down(pressTime):
-    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), pressTime)
-
-def left(pressTime):
-    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), pressTime)
-
-def right(pressTime):
-    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), pressTime)
-
-def stop():
-    chatPlays.releaseKey(chatPlays.keyCodes.get("K"))
-    chatPlays.releaseKey(chatPlays.keyCodes.get("L"))
-    chatPlays.releaseKey(chatPlays.keyCodes.get("W"))
-    chatPlays.releaseKey(chatPlays.keyCodes.get("A"))
-    chatPlays.releaseKey(chatPlays.keyCodes.get("S"))
-    chatPlays.releaseKey(chatPlays.keyCodes.get("D"))

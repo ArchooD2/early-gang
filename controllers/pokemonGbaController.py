@@ -1,20 +1,32 @@
+# imports
 from libraries import chatPlays
 from libraries.autoStream import *
-from time import *
-import requests
-from random import *
+import random
 
+# setting up variables
+pressTime = (random.randint(1, 3) / 10)
+lightPressTime = (random.randint(1, 3) / 100)
+holdTime = random.randint(5, 10)
+
+# reading config
+config = configparser.ConfigParser()
+config.read(os.path.abspath((os.path.join(directory, "config.ini"))))
+landmines = config.get("twitch", "landmines", fallback = "").strip("[]").split(", ")
+
+# makes inputs when no one has typed in chat for a while
 def idleBot():
+
+    # checks if idle bot is supposed to be on and if no one has chatted
     while chatPlays.idleBotPlaying:
         if chatPlays.noRecentMessages:
 
             # time between inputs
-            sleep(randint(1, 10) / 10)
+            sleep(random.randint(1, 10) / 10)
+            dice = random.randint(1, 4)
 
-            pressTime = .3
-            dice = randint(1, 4)
+            # 25% chance of non directionals
             if dice == 1:
-                dice = randint(1, 6)
+                dice = random.randint(1, 6)
                 match dice:
                     case 1:
                         a(pressTime)
@@ -28,8 +40,10 @@ def idleBot():
                         select(pressTime)
                     case 6:
                         start(pressTime)
+
+            # 75% chance of directionals
             else:
-                dice = randint(1, 5)
+                dice = random.randint(1, 5)
                 match dice:
                     case 1:
                         up(pressTime)
@@ -40,24 +54,25 @@ def idleBot():
                     case 4:
                         right(pressTime)
                     case 5:
-                        wander()
+                        wander(4, holdTime)
 
+# makes inputs every so often
 def inputBot():
-    pressTime = .3
-    holdTime = 5
-    lightPressTime =  .03
 
+    # checks if conditions are right
     while chatPlays.inputBotPlaying:
         if not chatPlays.snackShot:
 
+            # sleepy snack controls
             if chatPlays.currentSnack == "sleepy":
+
                 # time between inputs
-                sleep(randint(60, 360))
-                dice = randint(1, 100)
+                sleep(random.randint(60, 360))
+                dice = random.randint(1, 100)
 
                 # 5% chance of no action
                 if dice < 96:
-                    dice = randint(1, 17)
+                    dice = random.randint(1, 17)
                     match dice:
                         case 1:
                             up(pressTime)
@@ -91,29 +106,19 @@ def inputBot():
                             select(pressTime)
                         case 16:
                             start(pressTime)
-
-                        # reduced wander
                         case 17:
-                            for num in range(2):
-                                dice = randint(1, 4)
-                                match dice:
-                                    case 1:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
-                                    case 2:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
-                                    case 3:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
-                                    case 4:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
+                            wander(2, holdTime)
 
+            # chris snack controls
             elif chatPlays.currentSnack == "chris":
+
                 # time between inputs
-                sleep(randint(10, 60))
-                dice = randint(1, 3)
+                sleep(random.randint(10, 60))
+                dice = random.randint(1, 3)
 
                 # 33% chance of no action
                 if dice == 1 or dice == 2:
-                    dice = randint(1, 17)
+                    dice = random.randint(1, 17)
                     match dice:
                         case 1:
                             up(pressTime)
@@ -147,30 +152,20 @@ def inputBot():
                             select(pressTime)
                         case 16:
                             start(pressTime)
-
-                        # reduced wander
                         case 17:
-                            for num in range(2):
-                                dice = randint(1, 4)
-                                match dice:
-                                    case 1:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
-                                    case 2:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
-                                    case 3:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
-                                    case 4:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
+                            wander(2, holdTime)
 
+            # burst snack controls
             elif chatPlays.currentSnack == "burst":
+
                 # time between inputs
                 sleep(300)
-                dice = randint(1, 10)
+                dice = random.randint(1, 10)
 
                 # 10% chance of no action
                 if dice != 1:
                     for i in range(5):
-                        dice = randint(1, 17)
+                        dice = random.randint(1, 17)
                         match dice:
                             case 1:
                                 up(pressTime)
@@ -204,29 +199,19 @@ def inputBot():
                                 select(pressTime)
                             case 16:
                                 start(pressTime)
-
-                            # reduced wander
                             case 17:
-                                for num in range(2):
-                                    dice = randint(1, 4)
-                                    match dice:
-                                        case 1:
-                                            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
-                                        case 2:
-                                            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
-                                        case 3:
-                                            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
-                                        case 4:
-                                            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
+                                wander(2, holdTime)
 
+            # silly snack controls
             elif chatPlays.currentSnack == "silly":
+
                 # time between inputs
-                sleep(randint(10, 40))
-                dice = randint(1, 3)
+                sleep(random.randint(10, 40))
+                dice = random.randint(1, 3)
 
                 # 33% chance of no action
                 if dice != 1:
-                    dice = randint(1, 9)
+                    dice = random.randint(1, 9)
                     match dice:
                         case 1:
                             up(pressTime)
@@ -244,28 +229,19 @@ def inputBot():
                             holdLeft(holdTime)
                         case 8:
                             holdDown(holdTime)
-                        # reduced wander
                         case 9:
-                            for num in range(2):
-                                dice = randint(1, 4)
-                                match dice:
-                                    case 1:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
-                                    case 2:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
-                                    case 3:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
-                                    case 4:
-                                        chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
+                            wander(2, holdTime)
 
+            # cautious snack controls
             elif chatPlays.currentSnack == "cautious":
+
                 # time between inputs
-                sleep(randint(10, 60))
-                dice = randint(1, 5)
+                sleep(random.randint(10, 60))
+                dice = random.randint(1, 5)
 
                 # 20% chance of no action
                 if dice != 1:
-                    dice = randint(1, 17)
+                    dice = random.randint(1, 6)
                     match dice:
                         case 1:
                             north(lightPressTime)
@@ -280,11 +256,14 @@ def inputBot():
                         case 6:
                             mashB(pressTime)
 
-
+# chat controls
 def controller(data):
+
+    # makes sure chat is playing
     chatPlays.noRecentMessages = False
     if chatPlays.chatPlaying is True:
 
+        # getting current viewer count
         connected = False
         while not connected:
             try:
@@ -299,35 +278,33 @@ def controller(data):
             except:
                 sleep(5)
 
-        dice = 1
-        connected = False
-        while not connected:
-            try:
-                if int(streamResponse.get("data")[0].get("viewer_count")) > 100:
-                    dice = (randint(1, 10))
-                elif int(streamResponse.get("data")[0].get("viewer_count")) > 50:
-                    dice = randint(1, 5)
-                elif int(streamResponse.get("data")[0].get("viewer_count")) > 35:
-                    dice = randint(1, 5)
-                    if dice == 1 or dice == 2:
-                        dice = 1
-                elif int(streamResponse.get("data")[0].get("viewer_count")) > 20:
-                    dice = (randint(1, 4))
-                    if dice != 1:
-                        dice = 1
-                connected = True
-            except:
-                sleep(1)
+        # setting up odds based on view count
+        try:
+            if int(streamResponse.get("data")[0].get("viewer_count")) > 100:
+                dice = (random.randint(1, 10))
+            elif int(streamResponse.get("data")[0].get("viewer_count")) > 50:
+                dice = random.randint(1, 5)
+            elif int(streamResponse.get("data")[0].get("viewer_count")) > 35:
+                dice = random.randint(1, 5)
+                if dice == 1 or dice == 2:
+                    dice = 1
+            elif int(streamResponse.get("data")[0].get("viewer_count")) > 20:
+                dice = (random.randint(1, 4))
+                if dice != 1:
+                    dice = 1
+            else:
+                dice = 1
+        except:
+            dice = 1
 
+        # making input
         if dice == 1:
             message = data["message"].lower()
-            pressTime = (randint(1, 3) / 10)
-            lightPressTime = (randint(5, 11) / 100)
-            holdTime = 5
-            dice = randint(1, 40)
+            dice = random.randint(1, 40)
+
             # 2.5% chance of random input
             if dice == 1:
-                dice = randint(1, 28)
+                dice = random.randint(1, 28)
                 match dice:
                     case 1:
                         up(pressTime)
@@ -368,7 +345,7 @@ def controller(data):
                     case 19:
                         stop()
                     case 20:
-                        wander()
+                        wander(4, holdTime)
                     case 21:
                         north(lightPressTime)
                     case 22:
@@ -378,13 +355,14 @@ def controller(data):
                     case 24:
                         east(lightPressTime)
                     case 25:
-                        upWander()
+                        upWander(holdTime)
                     case 26:
-                        downWander()
+                        downWander(holdTime)
                     case 27:
-                        leftWander()
+                        leftWander(holdTime)
                     case 28:
-                        rightWander()
+                        rightWander(holdTime)
+
             # 2.5% chance of opposite input
             elif dice == 2:
                 if message == "a":
@@ -408,13 +386,13 @@ def controller(data):
                 elif "start" in message:
                     select(pressTime)
                 elif "up wander" in message:
-                    downWander()
+                    downWander(holdTime)
                 elif "down wander" in message:
-                    upWander()
+                    upWander(holdTime)
                 elif "left wander" in message:
-                    rightWander()
+                    rightWander(holdTime)
                 elif "right wander" in message:
-                    leftWander()
+                    leftWander(holdTime)
                 elif "wander" in message:
                     stop()
                 elif "hold up" in message:
@@ -442,12 +420,14 @@ def controller(data):
                 elif "right" in message:
                     left(pressTime)
                 elif "stop" in message:
-                    upWander()
-                    downWander()
-                    leftWander()
-                    rightWander()
-                elif chatPlays.landmines[0] in message or chatPlays.landmines[1] in message or chatPlays.landmines[2] in message or chatPlays.landmines[3] in message or chatPlays.landmines[4] in message:
-                    stop()
+                    upWander(holdTime)
+                    downWander(holdTime)
+                    leftWander(holdTime)
+                    rightWander(holdTime)
+                elif landmines[0] in message or landmines[1] in message or landmines[2] in message or landmines[3] in message or landmines[4] in message:
+                    if chatPlays.landminesActive:
+                        stop()
+
             # 95% chance of correct inputs
             else:
                 if message == "a":
@@ -471,15 +451,15 @@ def controller(data):
                 elif "start" in message:
                     start(pressTime)
                 elif "up wander" in message:
-                    upWander()
+                    upWander(holdTime)
                 elif "down wander" in message:
-                    downWander()
+                    downWander(holdTime)
                 elif "left wander" in message:
-                    leftWander()
+                    leftWander(holdTime)
                 elif "right wander" in message:
-                    rightWander()
+                    rightWander(holdTime)
                 elif "wander" in message:
-                    wander()
+                    wander(4, holdTime)
                 elif "hold up" in message:
                     holdUp(holdTime)
                 elif "hold down" in message:
@@ -506,21 +486,11 @@ def controller(data):
                     right(pressTime)
                 elif "stop" in message:
                     stop()
-                elif chatPlays.landmines[0] in message or chatPlays.landmines[1] in message or chatPlays.landmines[2] in message or chatPlays.landmines[3] in message or chatPlays.landmines[4] in message:
-                    for num in range(2):
-                        dice = randint(1, 4)
-                        match dice:
-                            case 1:
-                                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
-                            case 2:
-                                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
-                            case 3:
-                                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
-                            case 4:
-                                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
+                elif landmines[0] in message or landmines[1] in message or landmines[2] in message or landmines[3] in message or landmines[4] in message:
+                    if chatPlays.landminesActive:
+                        wander(2, holdTime)
 
 # define controls down here
-
 def a(pressTime):
     chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("L"), pressTime)
 
@@ -559,81 +529,81 @@ def select(pressTime):
 def start(pressTime):
     chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("G"), pressTime)
 
-def wander():
-    for x in range(4):
-        dice = randint(1, 4)
+def wander(times, holdTime):
+    for i in range(times):
+        dice = random.randint(1, 4)
         match dice:
             case 1:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
+                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), holdTime)
             case 2:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
+                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), holdTime)
             case 3:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
+                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), holdTime)
             case 4:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
+                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), holdTime)
 
-def upWander():
-    for x in range(4):
-        dice = randint(1, 10)
+def upWander(holdTime):
+    for i in range(4):
+        dice = random.randint(1, 10)
         if dice == 1 or dice == 2 or dice == 3 or dice == 4:
-            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
+            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), holdTime)
         else:
-            dice = randint(1, 2)
+            dice = random.randint(1, 2)
             if dice == 1:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
+                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), holdTime)
             else:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
+                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), holdTime)
 
-def downWander():
-    for x in range(4):
-        dice = randint(1, 10)
+def downWander(holdTime):
+    for i in range(4):
+        dice = random.randint(1, 10)
         if dice == 1 or dice == 2 or dice == 3 or dice == 4:
-            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
+            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), holdTime)
         else:
-            dice = randint(1, 2)
+            dice = random.randint(1, 2)
             if dice == 1:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
+                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), holdTime)
             else:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
+                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), holdTime)
 
-def leftWander():
-    for x in range(4):
-        dice = randint(1, 10)
+def leftWander(holdTime):
+    for i in range(4):
+        dice = random.randint(1, 10)
         if dice == 1 or dice == 2 or dice == 3 or dice == 4:
-            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
+            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), holdTime)
         else:
-            dice = randint(1, 2)
+            dice = random.randint(1, 2)
             if dice == 1:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
+                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), holdTime)
             else:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
+                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), holdTime)
 
-def rightWander():
-    for x in range(4):
-        dice = randint(1, 10)
+def rightWander(holdTime):
+    for i in range(4):
+        dice = random.randint(1, 10)
         if dice == 1 or dice == 2 or dice == 3 or dice == 4:
-            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
+            chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), holdTime)
         else:
-            dice = randint(1, 2)
+            dice = random.randint(1, 2)
             if dice == 1:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
+                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), holdTime)
             else:
-                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
+                chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), holdTime)
 
 def holdUp(holdTime):
-    dice = randint(1, 100)
+    dice = random.randint(1, 100)
     if dice == 1:
-        for x in range(8):
-            dice = randint(1, 4)
+        for i in range(8):
+            dice = random.randint(1, 4)
             match dice:
                 case 1:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
+                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), holdTime)
                 case 2:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
+                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), holdTime)
                 case 3:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
+                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), holdTime)
                 case 4:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
+                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), holdTime)
     else:
         chatPlays.releaseKey(chatPlays.keyCodes.get("S"))
         chatPlays.releaseKey(chatPlays.keyCodes.get("A"))
@@ -641,19 +611,19 @@ def holdUp(holdTime):
         chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), holdTime)
 
 def holdDown(holdTime):
-    dice = randint(1, 100)
+    dice = random.randint(1, 100)
     if dice == 1:
-        for x in range(8):
-            dice = randint(1, 4)
+        for i in range(8):
+            dice = random.randint(1, 4)
             match dice:
                 case 1:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
+                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), holdTime)
                 case 2:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
+                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), holdTime)
                 case 3:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
+                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), holdTime)
                 case 4:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
+                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), holdTime)
     else:
         chatPlays.releaseKey(chatPlays.keyCodes.get("W"))
         chatPlays.releaseKey(chatPlays.keyCodes.get("A"))
@@ -661,19 +631,19 @@ def holdDown(holdTime):
         chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), holdTime)
 
 def holdLeft(holdTime):
-    dice = randint(1, 100)
+    dice = random.randint(1, 100)
     if dice == 1:
-        for x in range(8):
-            dice = randint(1, 4)
+        for i in range(8):
+            dice = random.randint(1, 4)
             match dice:
                 case 1:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
+                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), holdTime)
                 case 2:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
+                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), holdTime)
                 case 3:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
+                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), holdTime)
                 case 4:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
+                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), holdTime)
     else:
         chatPlays.releaseKey(chatPlays.keyCodes.get("D"))
         chatPlays.releaseKey(chatPlays.keyCodes.get("S"))
@@ -681,19 +651,19 @@ def holdLeft(holdTime):
         chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), holdTime)
 
 def holdRight(holdTime):
-    dice = randint(1, 100)
+    dice = random.randint(1, 100)
     if dice == 1:
-        for x in range(8):
-            dice = randint(1, 4)
+        for i in range(8):
+            dice = random.randint(1, 4)
             match dice:
                 case 1:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), randint(1, 3))
+                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), holdTime)
                 case 2:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), randint(1, 3))
+                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), holdTime)
                 case 3:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), randint(1, 3))
+                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), holdTime)
                 case 4:
-                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), randint(1, 3))
+                    chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), holdTime)
     else:
         chatPlays.releaseKey(chatPlays.keyCodes.get("A"))
         chatPlays.releaseKey(chatPlays.keyCodes.get("W"))
