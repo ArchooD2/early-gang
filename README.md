@@ -17,13 +17,9 @@
 ### part II - setting up the script
 - download the .zip
 - unzip the folder and open config.ini in a text editor
-- fill in these lines from the twitch section
-  - client id - your client id, you'll find this in part III
-  - access token - your access token, you'll find this in part III
-  - streamer channel name - the name of the twitch channel that isn't yours
-  - your channel name - the name of the your twitch channel
-- if you're using chatPlays.py be sure to change the controller to fit whatever game you're using it for and fill out landmines.txt
-- once you have all of these filled in you can run the script
+- fill in each line for each section you plan on using
+- if you're using chatPlays.py be sure to change the controller to fit whatever game you're using it for
+- once you have the config set up can run the script
 
 ### part III - setting up twitch
 - log into your [dev account](https://dev.twitch.tv/)
@@ -38,7 +34,7 @@
 - copy and paste that long ass string into the twitch access token section
 
 ### part IV - setting up spotify
-  - log into [spotify developers](https://developer.spotify.com/) and go to your dashboard
+  - login to [spotify developers](https://developer.spotify.com/) and go to your dashboard
   - click "Create App" and set http://localhost:8888/callback as the redirect url
   - go to the app then click "Settings" and you should see "Client ID" and "Client secret" near the top
   - paste these into your config file at their respective locations
@@ -51,14 +47,20 @@
   - change the "Password" field to whatever password you want then update the respective line in the config file
   - in whatever scene you want the tts to show in, create two text sources called "tts body" and "tts header"
   - style these however you want but make sure to check the "Read from file" tbox in the properties menu and give it the directories of ttsHeader.txt or ttsBody.txt respectively
+  - do the same with another text source but called "snack status" for snackStatus.txt
 
 ### part VI - setting up tiltify
-  - log into [tiltify developers](https://app.tiltify.com/developers)
+  - login to [tiltify developers](https://app.tiltify.com/developers)
   - click "Create application" and enter "https://localhost/" as the redirect url
   - once the app is created, scroll down and you should see "Client ID" and "Client Secret" at the bottom
   - paste these into the config file
   - go to "https://v5api.tiltify.com/oauth/authorize?client_id=CLIENT_ID_HERE&redirect_uri=https%3A%2F%2Flocalhost%2F&response_type=code&scope=public" after replacing "CLIENT_ID_HERE" with yours
   - paste the text after "code=" in the url into the config file
+
+### part VII - setting up discord
+  - login to [discord developers](https://discord.com/developers/applications)
+  - make a new application for each discord bot you're using
+  - in the app's bot settings right under username click to make a token then paste it into the config
 
 ### questions? comments? concerns?
 ### message kai_2910 on discord for the best chance of a timely response :)
