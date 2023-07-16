@@ -1,11 +1,14 @@
 # functions for doing stream stuff remotely/semi-remotely 
 
-from time import *
-import requests
-import pyautogui
-import os
+# imports
 import configparser
-from urllib.parse import urlencode
+import os
+import time
+import pyautogui
+import requests
+
+# setting up variables
+whiteListers = ["dougdoug", "parkzer", "fizzeghost", "sna1l_boy"]
 
 # finding directory
 directory = ""
@@ -14,15 +17,12 @@ if os.path.exists(os.path.abspath(os.path.join("files"))):
 else:
     print("looking for files directory")
     for root, dirs, files in os.walk("\\"):
-        print(os.path.abspath(os.path.join(root)))
         if "early-gang-main\\files\\config.ini" in os.path.abspath(os.path.join(root, "config.ini")):
             directory = os.path.abspath(os.path.join(root))
-
 if directory == "":
     print("couldn't find directory")
 else:
     print(directory)
-
 
 # reading config
 config = configparser.ConfigParser()
@@ -32,40 +32,14 @@ accessToken = config.get("twitch", "access token")
 streamerChannelName = config.get("twitch", "streamer channel name")
 yourChannelName = config.get("twitch", "your channel name")
 
-spotifyClientID = config.get("spotify", "client id")
-spotifyClientSecret = config.get("spotify", "client secret")
-spotifyRefreshToken = config.get("spotify", "spotify refresh token")
-
-# if you don't have a refresh token
-if spotifyRefreshToken == "":
-    print(f'authorize this script by going to:\n{"https://accounts.spotify.com/authorize" + "?" + urlencode({"client_id": spotifyClientID, "response_type": "code", "redirect_uri": "http://localhost:8888/callback", "scope": "user-read-currently-playing user-modify-playback-state"})}')
-    authorizationCode = input("enter the authorization code found in the redirected url after \"code=\": ")
-
-    # gets access token and refresh token using the code
-    response = requests.post("https://accounts.spotify.com/api/token", auth = (spotifyClientID, spotifyClientSecret), data = {"grant_type": "authorization_code", "code": authorizationCode, "redirect_uri": "http://localhost:8888/callback"})
-    data = response.json()
-    if 'refresh_token' in data:
-        # writes refresh token to info file for future use
-        with open(os.path.abspath((os.path.join(directory, "config.ini"))), 'r') as file:
-            lines = file.readlines()
-        for i, line in enumerate(lines):
-            if line.startswith("spotify refresh token ="):
-                lines[i] = "spotify refresh token = " + data['refresh_token'] + "\n"  # Replace "token" with the desired value
-                break  # Exit the loop once the line is found
-        with open(os.path.abspath((os.path.join(directory, "config.ini"))), 'w') as file:
-            file.writelines(lines)
-    else:
-        print(f"problem getting tokens: {data}")
-
 # checks if a channel is live then returns true if they are, false if not, and none if an error occurs
 def isLive(channelName):
-    # try/except so the script doesn't throw an error if the internet briefly goes out
+
+    # asking twitch for the information
     try:
-        # checking if you have the rate requests to do this
         response = requests.get("https://api.twitch.tv/helix/users", headers = {"Client-ID": clientID, "Authorization": f"Bearer {accessToken}"})
         rateLimit = response.headers.get("Ratelimit-Remaining")
         if rateLimit != "0":
-            # asking twitch for the information
             response = requests.get("https://api.twitch.tv/helix/streams?user_login=" + channelName, headers = {"Client-ID": clientID, "Authorization": "Bearer " + accessToken})
             if response.status_code == 200:
                 data = response.json()
@@ -73,78 +47,79 @@ def isLive(channelName):
                     return True
                 else:
                     return False
+
             # error handling
             else:
-                print("oops you fucked up somewhere\ndouble check your info file")
+                print("oops you fucked up somewhere double check your info file")
                 return None
-        # waiting and trying again if theres no rate left
+
+        # trying again
         else:
-            sleep(5)
+            time.sleep(5)
             isLive(channelName)
-    # waiting and trying again if internet goes out
     except:
-        sleep(5)
+        time.sleep(5)
         isLive(channelName)
 
 # looks up the id corresponding to a channel name
 # needed for initiating raids
 def getBroadcasterId(channelName):
-    # try/except so the script doesnt throw an error if the internet briefly goes out
+
+    # asking twitch for the id
     try:
-        # checking if you have the rate requests to do this
         response = requests.get("https://api.twitch.tv/helix/users", headers = {"Client-ID": clientID, "Authorization": f"Bearer {accessToken}"})
         rateLimit = response.headers.get("Ratelimit-Remaining")
         if rateLimit != "0":
-            # asking twitch for the information
             response = requests.get("https://api.twitch.tv/helix/users?login=" + channelName, headers = {"Client-ID": clientID, "Authorization": "Bearer " + accessToken})
             if response.status_code == 200:
                 data = response.json()
                 if data["data"]:
                     broadcasterId = data["data"][0]["id"]
                     return broadcasterId
+
                 # error handling
                 else:
                     print(channelName + "is misspelled or something")
+
             # more error handling
             else:
                 print("twitch fucked up")
-        # waiting and trying again if theres no rate left
+
+        # trying again
         else:
-            sleep(5)
+            time.sleep(5)
             getBroadcasterId(channelName)
-    # waiting and trying again if internet goes out
     except:
-        sleep(5)
+        time.sleep(5)
         getBroadcasterId(channelName)
 
 # starts a raid from your channel to another
 def raid(raiderChannelName, raideeChannelName):
-    # try/except so the script doesnt throw an error if the internet briefly goes out
+
+    # asking twitch to start raid
     try:
-        # checking if you have the rate requests to do this
         response = requests.get("https://api.twitch.tv/helix/users", headers = {"Client-ID": clientID, "Authorization": f"Bearer {accessToken}"})
         rateLimit = response.headers.get("Ratelimit-Remaining")
         if rateLimit != "0":
-            # asking twitch to start raid
             if getBroadcasterId(raiderChannelName) and getBroadcasterId(raideeChannelName):
-                raid_response = requests.post("https://api.twitch.tv/helix/raids", headers = {"Authorization": "Bearer " + accessToken, "Client-Id": clientID} , params = {"from_broadcaster_id": getBroadcasterId(raiderChannelName), "to_broadcaster_id": getBroadcasterId(raideeChannelName)})
-                # error handling
+                raid_response = requests.post("https://api.twitch.tv/helix/raids", headers = {"Authorization": "Bearer " + accessToken, "Client-Id": clientID}, params = {"from_broadcaster_id": getBroadcasterId(raiderChannelName), "to_broadcaster_id": getBroadcasterId(raideeChannelName)})
                 if raid_response.status_code != 200:
                     print("twitch fucked up")
-            # trying again if the script couldn't find the broadcaster ids
             else:
                 raid(raiderChannelName, raideeChannelName)
-        # waiting and trying again if there's no rate left
+
+        # trying again
         else:
-            sleep(5)
+            time.sleep(5)
             raid(raiderChannelName, raideeChannelName)
+
     # waiting and trying again if internet goes out
     except:
-        sleep(5)
+        time.sleep(5)
         raid(raiderChannelName, raideeChannelName)
 
     # waiting for raid cooldown
-    sleep(15)
+    time.sleep(15)
 
     # clicking the raid now button
     openBrowser()
@@ -156,7 +131,7 @@ def raid(raiderChannelName, raideeChannelName):
         print("script couldn't find the start raid button")
 
     # waiting to make sure raid went through
-    sleep(10)
+    time.sleep(10)
 
     # returning to your channel page
     pyautogui.keyDown("alt")
@@ -178,6 +153,7 @@ def startStream():
             pyautogui.click()
         else:
             print("script couldn't find the start streaming active icon")
+    openGame()
 
 # opens obs and clicks stop stream button
 def stopStream():
@@ -195,6 +171,7 @@ def stopStream():
             pyautogui.click()
         else:
             print("script couldn't find the stop streaming active button")
+    openGame()
 
 # clicks the obs icon
 def openOBS():
