@@ -1,13 +1,11 @@
 # functions for letting chat press keys based on their messages
-# make sure to change the controls and which keys they press depending on the game and your setup
-# also the arrow keys didn't seem to work on my pc so use LEFT, RIGHT, UP, and DOWN at your own risk ig
+# the arrow keys didn't seem to work on my pc so use LEFT, RIGHT, UP, and DOWN at your own risk ig
 
-from twitch_chat_irc import twitch_chat_irc
-from libraries.autoStream import *
+# imports
 import ctypes
+from libraries.charityDonoTTS import *
 import pynput
-import threading
-import configparser
+from twitch_chat_irc import twitch_chat_irc
 
 # change controller here
 from controllers.pokemonDsController import *
@@ -20,16 +18,12 @@ idleBotPlaying = False
 noRecentMessages = False
 autoSaving = False
 snackShot = False
+pinging = False
+landminesActive = True
 snacks = ["sleepy", "chris", "burst", "silly", "cautious"]
 currentSnack = "chris"
-idleBotLock = threading.Lock()
 sendInput = ctypes.windll.user32.SendInput
 keyCodes = {"Q": 0x10, "W": 0x11, "E": 0x12, "R": 0x13, "T": 0x14, "Y": 0x15, "U": 0x16, "I": 0x17, "O": 0x18, "P": 0x19, "A": 0x1E, "S": 0x1F, "D": 0x20, "F": 0x21, "G": 0x22, "H": 0x23, "J": 0x24, "K": 0x25, "L": 0x26, "Z": 0x2C, "X": 0x2D, "C": 0x2E, "V": 0x2F, "B": 0x30, "N": 0x31, "M": 0x32, "LEFT": 0xCB, "RIGHT": 0xCD, "UP": 0xC8, "DOWN": 0xD0, "ESCAPE": 0x01, "ONE": 0x02, "TWO": 0x03, "THREE": 0x04, "FOUR": 0x05, "FIVE": 0x06, "SIX": 0x07, "SEVEN": 0x08, "EIGHT": 0x09, "NINE": 0x0A, "ZERO": 0x0B, "MINUS": 0x0C, "EQUALS": 0x0D, "BACKSPACE": 0x0E, "APOSTROPHE": 0x28, "SEMICOLON": 0x27, "TAB": 0x0F, "CAPSLOCK": 0x3A, "ENTER": 0x1C, "CONTROL": 0x1D, "ALT": 0x38, "SHIFT": 0x2A, "TILDE": 0x29, "PRINTSCREEN": 0x37, "NUMLOCK": 0x45, "SPACE": 0x39, "DELETE": 0x53, "COMMA": 0x33, "PERIOD": 0x34, "BACKSLASH": 0x35, "FORWARDSLASH": 0x2B, "OPENBRACKET": 0x1A, "CLOSEBRACKET": 0x1B, "F1": 0x3B, "F2": 0x3C, "F3": 0x3D, "F4": 0x3E, "F5": 0x3F, "F6": 0x40, "F7": 0x41, "F8": 0x42, "F9": 0x43, "F10": 0x44, "F11": 0x57, "F12": 0x58}
-
-# reading config
-config = configparser.ConfigParser()
-config.read(os.path.abspath((os.path.join(directory, "config.ini"))))
-landmines = config.get('twitch', 'landmines', fallback='').strip('[]').split(', ')
 
 # holds down the given key
 def holdKey(key):
@@ -50,7 +44,7 @@ def releaseKey(key):
 # holds down the given key for the given number of seconds
 def holdAndReleaseKey(key, delay):
     holdKey(key)
-    sleep(delay)
+    time.sleep(delay)
     releaseKey(key)
 
 # presses the autosave key every ten minutes
@@ -59,7 +53,7 @@ def autoSave():
 		holdKey(keyCodes.get("SHIFT"))
 		holdAndReleaseKey(keyCodes.get("F1"), 1)
 		releaseKey(keyCodes.get("SHIFT"))
-		sleep(600)
+		time.sleep(600)
 
 # starts autosaving
 def startAutoSave():
@@ -98,20 +92,14 @@ def stopInputBot():
 # starts idle bot
 def startIdleBot():
 	global idleBotPlaying
-
-	with idleBotLock:
-		if not idleBotPlaying:
-			idleBotPlaying = True
-			idleBotThread = threading.Thread(target=idleBot)
-			idleBotThread.start()
+	idleBotPlaying = True
+	idleBotThread = threading.Thread(target = idleBot)
+	idleBotThread.start()
 
 # stops the idle bot
 def stopIdleBot():
 	global idleBotPlaying
-
-	with idleBotLock:
-		if idleBotPlaying:
-			idleBotPlaying = False
+	idleBotPlaying = False
 
 # allows the program to start taking and executing commands from chat messages
 def startChatPlays():
@@ -133,3 +121,47 @@ def takeChatInputs():
 		message = connection.listen(yourChannelName, on_message = controller, timeout = 300)
 		noRecentMessages = True
 	print("connect to twitch before trying to receive messages bozo")
+
+# starts pinging
+def startInternetPing():
+	global pinging
+	pinging = True
+	pingingThread = threading.Thread(target = internetPing)
+	pingingThread.start()
+
+# stops pinging
+def stopInternetPing():
+	global pinging
+	pinging = False
+
+# checks internet status by pinging google
+def internetPing():
+	while pinging:
+		try:
+			response = requests.get('http://www.google.com', timeout = 5)
+
+		# resets websockets when reconnection after disconnecting
+		except:
+			connected = False
+			while not connected:
+				try:
+					response = requests.get('http://www.google.com', timeout = 5)
+					disconnectFromTwitchChat()
+					disconnectFromObs()
+					time.sleep(5)
+					connectToTwitchChat()
+					connectToObs()
+					connected = True
+				except:
+					time.sleep(5)
+
+# updates snack status text in obs
+def updateSnatus():
+	with open(os.path.abspath((os.path.join(directory, "snackStatus.txt"))), "w") as file:
+		if snackShot:
+			file.write(currentSnack + " snack is dead")
+		else:
+			file.write(currentSnack + " snack is alive")
+
+# resetting snack status when script is ran
+updateSnatus()
