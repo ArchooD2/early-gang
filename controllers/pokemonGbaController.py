@@ -1,4 +1,6 @@
 # imports
+import time
+
 from libraries import chatPlays
 from libraries.autoStream import *
 import random
@@ -21,7 +23,7 @@ def idleBot():
         if chatPlays.noRecentMessages:
 
             # time between inputs
-            sleep(random.randint(1, 10) / 10)
+            time.sleep(random.randint(1, 10) / 10)
             dice = random.randint(1, 4)
 
             # 25% chance of non directionals
@@ -67,7 +69,7 @@ def inputBot():
             if chatPlays.currentSnack == "sleepy":
 
                 # time between inputs
-                sleep(random.randint(60, 360))
+                time.sleep(random.randint(60, 360))
                 dice = random.randint(1, 100)
 
                 # 5% chance of no action
@@ -113,7 +115,7 @@ def inputBot():
             elif chatPlays.currentSnack == "chris":
 
                 # time between inputs
-                sleep(random.randint(10, 60))
+                time.sleep(random.randint(10, 60))
                 dice = random.randint(1, 3)
 
                 # 33% chance of no action
@@ -159,7 +161,7 @@ def inputBot():
             elif chatPlays.currentSnack == "burst":
 
                 # time between inputs
-                sleep(300)
+                time.sleep(300)
                 dice = random.randint(1, 10)
 
                 # 10% chance of no action
@@ -206,7 +208,7 @@ def inputBot():
             elif chatPlays.currentSnack == "silly":
 
                 # time between inputs
-                sleep(random.randint(10, 40))
+                time.sleep(random.randint(10, 40))
                 dice = random.randint(1, 3)
 
                 # 33% chance of no action
@@ -236,7 +238,7 @@ def inputBot():
             elif chatPlays.currentSnack == "cautious":
 
                 # time between inputs
-                sleep(random.randint(10, 60))
+                time.sleep(random.randint(10, 60))
                 dice = random.randint(1, 5)
 
                 # 20% chance of no action
@@ -274,9 +276,9 @@ def controller(data):
                     streamResponse = requests.get(f'https://api.twitch.tv/helix/streams?user_id={userResponse.get("data")[0].get("id")}', headers={"Client-ID": chatPlays.clientID, "Authorization": "Bearer " + chatPlays.accessToken}).json()
                     connected = True
                 else:
-                    sleep(5)
+                    time.sleep(5)
             except:
-                sleep(5)
+                time.sleep(5)
 
         # setting up odds based on view count
         try:
@@ -502,7 +504,7 @@ def mashA(pressTime):
     while mashTime <= 2:
         chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("L"), pressTime)
         mashTime += pressTime + .3
-        sleep(.3)
+        time.sleep(.3)
 
 def b(pressTime):
     chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("K"), pressTime)
@@ -515,7 +517,7 @@ def mashB(pressTime):
     while mashTime <= 2:
         chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("K"), pressTime)
         mashTime += pressTime + .3
-        sleep(.3)
+        time.sleep(.3)
 
 def x(pressTime):
     chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("I"), pressTime)

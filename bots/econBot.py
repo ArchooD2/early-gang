@@ -5,6 +5,7 @@
 
 # imports
 import asyncio
+import time
 from datetime import datetime, timezone
 import random
 from twitchio.ext import commands
@@ -75,7 +76,7 @@ class Bot(commands.Bot):
                 cursor = db.cursor()
                 cursor.execute("SELECT * FROM economy WHERE id=?", (getBroadcasterId(user.name),))
                 result = cursor.fetchone()
-                cursor.execute("UPDATE economy SET watchtime=? WHERE id=?", ((float(result[1]) + (time() - chatter[1])), getBroadcasterId(user.name)))
+                cursor.execute("UPDATE economy SET watchtime=? WHERE id=?", ((float(result[1]) + (time.time() - chatter[1])), getBroadcasterId(user.name)))
                 db.commit()
                 db.close()
 
@@ -604,8 +605,8 @@ class Bot(commands.Bot):
             if isLive(yourChannelName):
                 if not live:
                     for element in chatters:
-                        element[1] = time()
-                        element[2] = time()
+                        element[1] = time.time()
+                        element[2] = time.time()
                     live = True
                     firstRedeemed = False
 
@@ -621,11 +622,11 @@ class Bot(commands.Bot):
 
                         # setting points and watchtime
                         if result:
-                            if (time() - chatter[2]) >= 300:
+                            if (time.time() - chatter[2]) >= 300:
                                 cursor.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] + 10), chatter[0]))
-                                chatter[2] = time()
-                            cursor.execute("UPDATE economy SET watchtime=? WHERE id=?", ((float(result[1]) + (time() - chatter[1])), chatter[0]))
-                            chatter[1] = time()
+                                chatter[2] = time.time()
+                            cursor.execute("UPDATE economy SET watchtime=? WHERE id=?", ((float(result[1]) + (time.time() - chatter[1])), chatter[0]))
+                            chatter[1] = time.time()
 
                             db.commit()
                     db.close()
