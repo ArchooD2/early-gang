@@ -315,7 +315,7 @@ class Bot(commands.Bot):
     # lists commands available for purchase
     @commands.command()
     async def bpShop(self, ctx: commands.Context):
-        await ctx.send("[bot] !shoot (1000), !shootSnack (1000), !swapSnack (500), !emp (300)")
+        await ctx.send("[bot] !shoot (1000), !shootSnack (500), !swapSnack (300), !emp (300)")
 
     # times out user
     @commands.command()
@@ -533,7 +533,7 @@ class Bot(commands.Bot):
                 await ctx.send("[bot] not enough basement pesos")
             else:
                 if ctx.author.name not in whiteListers:
-                    cursor.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 1000), getBroadcasterId(ctx.author.name)))
+                    cursor.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 500), getBroadcasterId(ctx.author.name)))
                     db.commit()
 
                 # getting random action and item
@@ -566,7 +566,7 @@ class Bot(commands.Bot):
                 await ctx.send("[bot] not enough basement pesos")
             else:
                 if ctx.author.name not in whiteListers:
-                    cursor.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 500), getBroadcasterId(ctx.author.name)))
+                    cursor.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 300), getBroadcasterId(ctx.author.name)))
                     db.commit()
                 chatPlays.currentSnack = snacks[random.randint(0, len(snacks) - 1)]
                 await ctx.send("[bot] " + chatPlays.currentSnack + " snack was swapped in")
