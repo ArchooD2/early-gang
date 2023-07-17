@@ -549,7 +549,6 @@ class Bot(commands.Bot):
                 asyncio.create_task(self.snackWait())
             db.close()
 
-    # TODO
     @commands.command()
     async def healSnack(self, ctx: commands.Context):
 
