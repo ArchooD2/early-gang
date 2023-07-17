@@ -5,9 +5,7 @@
 
 # imports
 import asyncio
-import time
 from datetime import datetime, timezone
-import random
 from twitchio.ext import commands
 from libraries.chatPlays import *
 import sqlite3
@@ -380,9 +378,18 @@ class Bot(commands.Bot):
 
                     # getting item and action
                     cursor.execute("SELECT item FROM items ORDER BY RANDOM() LIMIT 1")
-                    item = cursor.fetchone()
+                    item = str(cursor.fetchone()).replace("(", "").replace(")", "").replace(",", "")
+                    if item[0] == "\'":
+                        item = item.replace("\'", "")
+                    else:
+                        item = item.replace("\"", "")
+
                     cursor.execute("SELECT action FROM pastTenseActions ORDER BY RANDOM() LIMIT 1")
-                    pastTenseAction = cursor.fetchone()
+                    pastTenseAction = str(cursor.fetchone()).replace("(", "").replace(")", "").replace(",", "")
+                    if item[0] == "\'":
+                        pastTenseAction = pastTenseAction.replace("\'", "")
+                    else:
+                        pastTenseAction = pastTenseAction.replace("\"", "")
 
                     # shooting the random chatter
                     connected = False
@@ -392,7 +399,7 @@ class Bot(commands.Bot):
                             rateLimit = response.headers.get("Ratelimit-Remaining")
                             if rateLimit != "0":
                                 response = requests.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + getBroadcasterId(yourChannelName) + "&moderator_id=" + getBroadcasterId(yourChannelName), headers = {"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json = {"data": {"user_id": user[0], "reason": "you got shot", "duration": duration}})
-                                await ctx.send("[bot] " + ctx.author.name + " " + ''.join(filter(lambda x: x.isalpha() or x.isspace(), str(pastTenseAction))) + " " + user[1] + " with " + ''.join(filter(lambda x: x.isalpha() or x.isspace(), str(item))))
+                                await ctx.send("[bot] " + ctx.author.name + " " + pastTenseAction + " " + user[1] + " with " + item)
                                 connected = True
                             else:
                                 await asyncio.sleep(5)
@@ -436,11 +443,23 @@ class Bot(commands.Bot):
 
                         # getting item and action
                         cursor.execute("SELECT item FROM items ORDER BY RANDOM() LIMIT 1")
-                        item = cursor.fetchone()
+                        item = str(cursor.fetchone()).replace("(", "").replace(")", "").replace(",", "")
+                        if item[0] == "\'":
+                            item = item.replace("\'", "")
+                        else:
+                            item = item.replace("\"", "")
                         cursor.execute("SELECT action FROM pastTenseActions ORDER BY RANDOM() LIMIT 1")
-                        pastTenseAction = cursor.fetchone()
+                        pastTenseAction = str(cursor.fetchone()).replace("(", "").replace(")", "").replace(",", "")
+                        if pastTenseAction[0] == "\'":
+                            pastTenseAction = pastTenseAction.replace("\'", "")
+                        else:
+                            pastTenseAction = pastTenseAction.replace("\"", "")
                         cursor.execute("SELECT action FROM presentTenseActions ORDER BY RANDOM() LIMIT 1")
-                        presentTenseAction = cursor.fetchone()
+                        presentTenseAction = str(cursor.fetchone()).replace("(", "").replace(")", "").replace(",", "")
+                        if presentTenseAction[0] == "\'":
+                            presentTenseAction = presentTenseAction.replace("\'", "")
+                        else:
+                            presentTenseAction = presentTenseAction.replace("\"", "")
 
                         # 10% chance to shoot yourself
                         if dice > 90:
@@ -452,7 +471,7 @@ class Bot(commands.Bot):
                                     if rateLimit != "0":
                                         response = requests.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + getBroadcasterId(yourChannelName) + "&moderator_id=" + getBroadcasterId(yourChannelName), headers = {"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json = {"data": {"user_id": getBroadcasterId(ctx.author.name), "reason": "you got shot", "duration": duration}})
                                         finalId = getBroadcasterId(ctx.author.name)
-                                        await ctx.send("[bot] " + ctx.author.name + " missed and " + ''.join(filter(lambda x: x.isalpha() or x.isspace(), str(item))) + " bounced into their head")
+                                        await ctx.send("[bot] " + ctx.author.name + " missed and " + item + " bounced into their head")
                                         connected = True
                                     else:
                                         await asyncio.sleep(5)
@@ -487,7 +506,7 @@ class Bot(commands.Bot):
                                     if rateLimit != "0":
                                         response = requests.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + getBroadcasterId(yourChannelName) + "&moderator_id=" + getBroadcasterId(yourChannelName), headers = {"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json = {"data": {"user_id": user[0], "reason": "you got shot", "duration": duration}})
                                         finalId = user[0]
-                                        await ctx.send("[bot] " + ctx.author.name + " tried to " + ''.join(filter(lambda x: x.isalpha() or x.isspace(), str(presentTenseAction))) + " " + ctx.message.content + " with "  + ''.join(filter(lambda x: x.isalpha() or x.isspace(), str(item))) + " but they used " + user[1] + " as a shield")
+                                        await ctx.send("[bot] " + ctx.author.name + " tried to " + presentTenseAction + " " + ctx.message.content + " with "  + item + " but they used " + user[1] + " as a shield")
                                         connected = True
                                     else:
                                         await asyncio.sleep(5)
@@ -505,7 +524,7 @@ class Bot(commands.Bot):
                                     if rateLimit != "0":
                                         response = requests.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + getBroadcasterId(yourChannelName) + "&moderator_id=" + getBroadcasterId(yourChannelName), headers = {"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json = {"data": {"user_id": id, "reason": "you got shot", "duration": duration}})
                                         finalId = id
-                                        await ctx.send("[bot] " + ctx.author.name + " " + ''.join(filter(lambda x: x.isalpha() or x.isspace(), str(pastTenseAction))) + " " + ctx.message.content + " with " + ''.join(filter(lambda x: x.isalpha() or x.isspace(), str(item))))
+                                        await ctx.send("[bot] " + ctx.author.name + " " + pastTenseAction + " " + ctx.message.content + " with " + item)
                                         connected = True
                                     else:
                                         await asyncio.sleep(5)
@@ -538,13 +557,22 @@ class Bot(commands.Bot):
 
                 # getting random action and item
                 cursor.execute("SELECT item FROM items ORDER BY RANDOM() LIMIT 1")
-                item = cursor.fetchone()
+                item = str(cursor.fetchone()).replace("(", "").replace(")", "").replace(",", "")
+                if item[0] == "\'":
+                    item = item.replace("\'", "")
+                else:
+                    item = item.replace("\"", "")
+
                 cursor.execute("SELECT action FROM pastTenseActions ORDER BY RANDOM() LIMIT 1")
-                action = cursor.fetchone()
+                action = str(cursor.fetchone()).replace("(", "").replace(")", "").replace(",", "")
+                if action[0] == "\'":
+                    action = action.replace("\'", "")
+                else:
+                    action = action.replace("\"", "")
 
                 # disabling input bot
                 chatPlays.snackShot = True
-                await ctx.send("[bot] " + ctx.author.name + " " + ''.join(filter(lambda x: x.isalpha() or x.isspace(), str(action))) + " " + chatPlays.currentSnack + " snack with " + ''.join(filter(lambda x: x.isalpha() or x.isspace(), str(item))))
+                await ctx.send("[bot] " + ctx.author.name + " " + action + " " + chatPlays.currentSnack + " snack with " + item)
                 updateSnatus()
                 asyncio.create_task(self.snackWait())
             db.close()
@@ -569,9 +597,13 @@ class Bot(commands.Bot):
                     cursor.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 250), getBroadcasterId(ctx.author.name)))
                     db.commit()
 
-                # getting random action and item
+                # getting random item
                 cursor.execute("SELECT item FROM items ORDER BY RANDOM() LIMIT 1")
-                item = cursor.fetchone()
+                item = str(cursor.fetchone()).replace("(", "").replace(")", "").replace(",", "")
+                if item[0] == "\'":
+                    item = item.replace("\'", "")
+                else:
+                    item = item.replace("\"", "")
 
                 # enabling bot
                 dice = random.randint(1, 100)
@@ -579,9 +611,9 @@ class Bot(commands.Bot):
                     chatPlays.snackShot = False
                     chatPlays.snackHealed = True
                     updateSnatus()
-                    await ctx.send("[bot] " + ctx.author.name + " healed " + chatPlays.currentSnack + " snack with " + ''.join(filter(lambda x: x.isalpha() or x.isspace(), str(item))))
+                    await ctx.send("[bot] " + ctx.author.name + " healed " + chatPlays.currentSnack + " snack with " + item)
                 else:
-                    await ctx.send("[bot] " + ctx.author.name + " failed to heal " + chatPlays.currentSnack + " snack with " + ''.join(filter(lambda x: x.isalpha() or x.isspace(), str(item))))
+                    await ctx.send("[bot] " + ctx.author.name + " failed to heal " + chatPlays.currentSnack + " snack with " + item)
             db.close()
 
     # changes input bot type
