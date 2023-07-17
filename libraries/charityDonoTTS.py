@@ -21,6 +21,8 @@ screenWidth, screenHeight = pyautogui.size()
 # reading config
 config = configparser.ConfigParser()
 config.read(os.path.abspath((os.path.join(directory, "config.ini"))))
+ttsBodyDirectory = config.get("directories", "tts body")
+ttsHeaderDirectory = config.get("directories", "tts header")
 websocketPassword = config.get("obs", "websocket server password")
 clientID = config.get("tiltify", "client id")
 clientSecret = config.get("tiltify", "client secret")
@@ -99,15 +101,17 @@ def donationAlert(name, amount, charity, message):
     formatted_text = ''.join(text)
 
     # change donation text
-    with open(os.path.abspath((os.path.join(directory, "ttsBody.txt"))), "w") as file:
+    with open(os.path.abspath(ttsBodyDirectory), "w") as file:
         file.write(formatted_text)
-    with open(os.path.abspath((os.path.join(directory, "ttsHeader.txt"))), "w") as file:
+    with open(os.path.abspath(ttsHeaderDirectory), "w") as file:
         file.write(f"{name} donated ${amount} to {charity}")
 
     # give obs time to update text
     time.sleep(2)
 
     # change source positions based on text size
+    # quarantined rn
+    '''
     response = ws.call(obwsrequests.GetSceneItemProperties(sceneName = getScene("tts header"), item = "tts header"))
     headerWidth = response.getWidth()
     headerHeight = response.getHeight()
@@ -115,6 +119,7 @@ def donationAlert(name, amount, charity, message):
     bodyWidth = response.getWidth()
     ws.call(obwsrequests.SetSceneItemProperties(sceneName= getScene("tts header"), item = "tts header", position = {"x": (screenWidth - headerWidth - 50), "y": 50}))
     ws.call(obwsrequests.SetSceneItemProperties(sceneName = getScene("tts body"), item="tts body", position = {"x": (screenWidth - headerWidth) + (headerWidth - bodyWidth)/2 - 50, "y": 50 + headerHeight}))
+    '''
 
     # tell obs to show sources
     ws.call(obwsrequests.SetSceneItemProperties(sceneName = getScene("tts body"), item = "tts body", visible = True))
