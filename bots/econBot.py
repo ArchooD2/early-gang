@@ -549,6 +549,7 @@ class Bot(commands.Bot):
                 asyncio.create_task(self.snackWait())
             db.close()
 
+    # reactivates input bot
     @commands.command()
     async def healSnack(self, ctx: commands.Context):
 
@@ -565,7 +566,7 @@ class Bot(commands.Bot):
                 await ctx.send("[bot] not enough basement pesos")
             else:
                 if ctx.author.name not in whiteListers:
-                    cursor.execute("UPDATE economy SET points=? WHERE id=?",((result[2] - 250), getBroadcasterId(ctx.author.name)))
+                    cursor.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 250), getBroadcasterId(ctx.author.name)))
                     db.commit()
 
                 # enabling bot
