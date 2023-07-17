@@ -291,8 +291,12 @@ class Bot(commands.Bot):
                 ctx.message.content = ctx.message.content.replace("!bpTax ", "")
                 ctx.message.content = ctx.message.content.split(", ")
 
+                # no negative numbers
+                if int(ctx.message.content[1]) < 0:
+                    await ctx.send("[bot] nice try")
+
                 # seeing if user exists
-                if getBroadcasterId(ctx.message.content[0]):
+                elif getBroadcasterId(ctx.message.content[0]):
                     async with databaseLock:
                         db = sqlite3.connect(os.path.abspath((os.path.join(directory, "chatData.db"))))
                         cursor = db.cursor()
