@@ -569,11 +569,19 @@ class Bot(commands.Bot):
                     cursor.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 250), getBroadcasterId(ctx.author.name)))
                     db.commit()
 
+                # getting random action and item
+                cursor.execute("SELECT item FROM items ORDER BY RANDOM() LIMIT 1")
+                item = cursor.fetchone()
+
                 # enabling bot
-                if chatPlays.snackShot:
+                dice = random.randint(1, 100)
+                if chatPlays.snackShot and dice < 56:
                     chatPlays.snackShot = False
                     chatPlays.snackHealed = True
                     updateSnatus()
+                    await ctx.send("[bot] " + ctx.author.name + " healed " + chatPlays.currentSnack + " snack with " + ''.join(filter(lambda x: x.isalpha() or x.isspace(), str(item))))
+                else:
+                    await ctx.send("[bot] " + ctx.author.name + " failed to heal " + chatPlays.currentSnack + " snack with " + ''.join(filter(lambda x: x.isalpha() or x.isspace(), str(item))))
             db.close()
 
     # changes input bot type
