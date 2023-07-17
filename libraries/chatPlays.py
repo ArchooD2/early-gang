@@ -18,6 +18,7 @@ idleBotPlaying = False
 noRecentMessages = False
 autoSaving = False
 snackShot = False
+snackHealed = False
 pinging = False
 landminesActive = True
 snacks = ["sleepy", "chris", "burst", "silly", "cautious", "sonic"]

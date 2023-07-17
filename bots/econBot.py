@@ -315,7 +315,7 @@ class Bot(commands.Bot):
     # lists commands available for purchase
     @commands.command()
     async def bpShop(self, ctx: commands.Context):
-        await ctx.send("[bot] !shoot (1000), !shootSnack (500), !swapSnack (300), !emp (300)")
+        await ctx.send("[bot] !shoot (1000), !shootSnack (500), !swapSnack (300), !emp (300), !healSnack (250)")
 
     # times out user
     @commands.command()
@@ -529,7 +529,7 @@ class Bot(commands.Bot):
             result = cursor.fetchone()
 
             # check if user has the money
-            if result[2] < 1000 and ctx.author.name not in whiteListers:
+            if result[2] < 500 and ctx.author.name not in whiteListers:
                 await ctx.send("[bot] not enough basement pesos")
             else:
                 if ctx.author.name not in whiteListers:
@@ -549,6 +549,33 @@ class Bot(commands.Bot):
                 asyncio.create_task(self.snackWait())
             db.close()
 
+    # TODO
+    @commands.command()
+    async def healSnack(self, ctx: commands.Context):
+
+        async with databaseLock:
+
+            # finding user id in database
+            db = sqlite3.connect(os.path.abspath((os.path.join(directory, "chatData.db"))))
+            cursor = db.cursor()
+            cursor.execute("SELECT * FROM economy WHERE id=?", (getBroadcasterId(ctx.author.name),))
+            result = cursor.fetchone()
+
+            # check if user has the money
+            if result[2] < 250 and ctx.author.name not in whiteListers:
+                await ctx.send("[bot] not enough basement pesos")
+            else:
+                if ctx.author.name not in whiteListers:
+                    cursor.execute("UPDATE economy SET points=? WHERE id=?",((result[2] - 250), getBroadcasterId(ctx.author.name)))
+                    db.commit()
+
+                # enabling bot
+                if chatPlays.snackShot:
+                    chatPlays.snackShot = False
+                    chatPlays.snackHealed = True
+                    updateSnatus()
+            db.close()
+
     # changes input bot type
     @commands.command()
     async def swapSnack(self, ctx: commands.Context):
@@ -562,7 +589,7 @@ class Bot(commands.Bot):
             result = cursor.fetchone()
 
             # check if user has the money
-            if result[2] < 500 and ctx.author.name not in whiteListers:
+            if result[2] < 300 and ctx.author.name not in whiteListers:
                 await ctx.send("[bot] not enough basement pesos")
             else:
                 if ctx.author.name not in whiteListers:
@@ -642,14 +669,18 @@ class Bot(commands.Bot):
 
     # thread to wait to restart input bot
     async def snackWait(self):
-        await asyncio.sleep(random.randint(600, 900))
-        chatPlays.snackShot = False
-        updateSnatus()
+        await asyncio.sleep(random.randint(1200, 3600))
+
+        if not snackHealed:
+            chatPlays.snackShot = False
+            updateSnatus()
+        else:
+            chatPlays.snackHealed = False
 
 
     # thread to wait to restart input bot
     async def empWait(self):
-        await asyncio.sleep(random.randint(600, 1800))
+        await asyncio.sleep(random.randint(600, 900))
         chatPlays.landminesActive = False
 
     # thread to wait to remod a mod after timing them out
