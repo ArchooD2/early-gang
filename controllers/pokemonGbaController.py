@@ -258,6 +258,40 @@ def inputBot():
                         case 6:
                             mashB(pressTime)
 
+            # sonic snack controls
+            elif chatPlays.currentSnack == "sonic":
+
+                # time between inputs
+                time.sleep(random.randint(10, 30))
+                dice = random.randint(1, 10)
+
+                # 10% chance of no action
+                if dice != 1:
+                    dice = random.randint(1, 6)
+                    match dice:
+                        case 1:
+                            north(lightPressTime)
+                        case 2:
+                            south(lightPressTime)
+                        case 3:
+                            east(lightPressTime)
+                        case 4:
+                            west(lightPressTime)
+                        case 5:
+                            mashA(pressTime)
+                        case 6:
+                            mashB(pressTime)
+                        case 7:
+                            wander(4, holdTime)
+                        case 8:
+                            upWander(holdTime)
+                        case 9:
+                            downWander(holdTime)
+                        case 10:
+                            leftWander(holdTime)
+                        case 11:
+                            rightWander(holdTime)
+
 # chat controls
 def controller(data):
 
