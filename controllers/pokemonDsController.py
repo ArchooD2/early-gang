@@ -22,7 +22,7 @@ def idleBot():
         if chatPlays.noRecentMessages:
             
             # time between inputs
-            sleep(random.randint(1, 10) / 10)
+            time.sleep(random.randint(1, 10) / 10)
             dice = random.randint(1, 4)
 
             # 25% chance of non directionals
@@ -72,7 +72,7 @@ def inputBot():
             if chatPlays.currentSnack == "sleepy":
                 
                 # time between inputs
-                sleep(random.randint(60, 360))
+                time.sleep(random.randint(30, 720))
                 dice = random.randint(1, 100)
 
                 # 5% chance of no action
@@ -122,7 +122,7 @@ def inputBot():
             elif chatPlays.currentSnack == "chris":
                 
                 # time between inputs
-                time.sleep(random.randint(10, 60))
+                time.sleep(random.randint(5, 120))
                 dice = random.randint(1, 3)
 
                 # 33% chance of no action
@@ -172,7 +172,7 @@ def inputBot():
             elif chatPlays.currentSnack == "burst":
                 
                 # time between inputs
-                time.sleep(300)
+                time.sleep(random.randint(150, 450))
                 dice = random.randint(1, 10)
 
                 # 10% chance of no action
@@ -223,7 +223,7 @@ def inputBot():
             elif chatPlays.currentSnack == "silly":
                 
                 # time between inputs
-                time.sleep(random.randint(10, 40))
+                time.sleep(random.randint(5, 80))
                 dice = random.randint(1, 3)
 
                 # 33% chance of no action
@@ -253,7 +253,7 @@ def inputBot():
             elif chatPlays.currentSnack == "cautious":
                 
                 # time between inputs
-                time.sleep(random.randint(10, 60))
+                time.sleep(random.randint(5, 120))
                 dice = random.randint(1, 5)
 
                 # 20% chance of no action
