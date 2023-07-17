@@ -69,7 +69,7 @@ def inputBot():
             if chatPlays.currentSnack == "sleepy":
 
                 # time between inputs
-                time.sleep(random.randint(30, 720))
+                time.sleep(random.randint(30, 360))
                 dice = random.randint(1, 100)
 
                 # 5% chance of no action
@@ -115,7 +115,7 @@ def inputBot():
             elif chatPlays.currentSnack == "chris":
 
                 # time between inputs
-                time.sleep(random.randint(5, 120))
+                time.sleep(random.randint(5, 60))
                 dice = random.randint(1, 3)
 
                 # 33% chance of no action
@@ -208,7 +208,7 @@ def inputBot():
             elif chatPlays.currentSnack == "silly":
 
                 # time between inputs
-                time.sleep(random.randint(5, 80))
+                time.sleep(random.randint(5, 40))
                 dice = random.randint(1, 3)
 
                 # 33% chance of no action
@@ -238,7 +238,7 @@ def inputBot():
             elif chatPlays.currentSnack == "cautious":
 
                 # time between inputs
-                time.sleep(random.randint(5, 120))
+                time.sleep(random.randint(5, 60))
                 dice = random.randint(1, 5)
 
                 # 20% chance of no action
