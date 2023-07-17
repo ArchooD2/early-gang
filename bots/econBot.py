@@ -214,7 +214,7 @@ class Bot(commands.Bot):
                 ctx.message.content = ctx.message.content.replace("!giveBp ", "")
                 ctx.message.content = ctx.message.content.split(", ")
 
-                if getBroadcasterId(ctx.message.content[0]):
+                if getBroadcasterId(ctx.message.content[0]) and ctx.message.content[0] not in whiteListers:
                     async with databaseLock:
                         db = sqlite3.connect(os.path.abspath((os.path.join(directory, "chatData.db"))))
                         cursor = db.cursor()
@@ -225,6 +225,8 @@ class Bot(commands.Bot):
                         db.close()
 
                     await ctx.send("[bot] gave " + ctx.message.content[0] + " " + ctx.message.content[1] + " basement pesos")
+                else:
+                    await ctx.send("[bot] no bribery")
 
         # actually transfer money if it's not a whitelister
         else:
