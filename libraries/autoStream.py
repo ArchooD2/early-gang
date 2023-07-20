@@ -3,9 +3,10 @@
 # imports
 import configparser
 import os
-import time
+import aiohttp
 import pyautogui
 import requests
+import asyncio
 
 # setting up variables
 whiteListers = ["dougdoug", "parkzer", "fizzeghost", "sna1l_boy"]
@@ -33,96 +34,91 @@ streamerChannelName = config.get("twitch", "streamer channel name")
 yourChannelName = config.get("twitch", "your channel name")
 
 # checks if a channel is live then returns true if they are, false if not, and none if an error occurs
-def isLive(channelName):
+async def isLive(channelName):
 
     # asking twitch for the information
     try:
-        response = requests.get("https://api.twitch.tv/helix/users", headers = {"Client-ID": clientID, "Authorization": f"Bearer {accessToken}"})
-        rateLimit = response.headers.get("Ratelimit-Remaining")
-        if rateLimit != "0":
-            response = requests.get("https://api.twitch.tv/helix/streams?user_login=" + channelName, headers = {"Client-ID": clientID, "Authorization": "Bearer " + accessToken})
-            if response.status_code == 200:
-                data = response.json()
-                if data["data"]:
-                    return True
+        async with aiohttp.ClientSession(headers = {"Client-ID": clientID, "Authorization": f"Bearer {accessToken}"}) as session:
+            async with session.get("https://api.twitch.tv/helix/users") as response:
+                rateLimit = response.headers.get("Ratelimit-Remaining")
+                if rateLimit != "0":
+                    async with session.get("https://api.twitch.tv/helix/streams?user_login=" + channelName) as stream_response:
+                        if stream_response.status == 200:
+                            data = await stream_response.json()
+                            if data["data"]:
+                                return True
+                            else:
+                                return False
+                        else:
+                            print("Oops, something went wrong. Double check your info file.")
+                            return None
+               # trying again
                 else:
-                    return False
-
-            # error handling
-            else:
-                print("oops you fucked up somewhere double check your info file")
-                return None
-
-        # trying again
-        else:
-            time.sleep(5)
-            isLive(channelName)
+                    await asyncio.sleep(5)
+                    await isLive(channelName)
     except:
-        time.sleep(5)
-        isLive(channelName)
+        await asyncio.sleep(5)
+        await isLive(channelName)
 
 # looks up the id corresponding to a channel name
 # needed for initiating raids
-def getBroadcasterId(channelName):
+async def getBroadcasterId(channelName):
 
     # asking twitch for the id
     try:
-        response = requests.get("https://api.twitch.tv/helix/users", headers = {"Client-ID": clientID, "Authorization": f"Bearer {accessToken}"})
-        rateLimit = response.headers.get("Ratelimit-Remaining")
-        if rateLimit != "0":
-            response = requests.get("https://api.twitch.tv/helix/users?login=" + channelName, headers = {"Client-ID": clientID, "Authorization": "Bearer " + accessToken})
-            if response.status_code == 200:
-                data = response.json()
-                if data["data"]:
-                    broadcasterId = data["data"][0]["id"]
-                    return broadcasterId
+        async with aiohttp.ClientSession() as session:
+            response = await session.get("https://api.twitch.tv/helix/users", headers = {"Client-ID": clientID, "Authorization": "Bearer " + accessToken})
+            rateLimit = response.headers.get("Ratelimit-Remaining")
+            if rateLimit != "0":
+                response = await session.get("https://api.twitch.tv/helix/users?login=" +channelName, headers = {"Client-ID": clientID, "Authorization": "Bearer " + accessToken})
 
-                # error handling
+                if response.status == 200:
+                    data = await response.json()
+                    if data["data"]:
+                        broadcasterId = data["data"][0]["id"]
+                        return broadcasterId
+
+                    # error handling
+                    else:
+                        print(channelName + " is misspelled or something")
+
+                # more error handling
                 else:
-                    print(channelName + "is misspelled or something")
-
-            # more error handling
-            else:
-                print("twitch fucked up")
-
-        # trying again
-        else:
-            time.sleep(5)
-            getBroadcasterId(channelName)
+                    await asyncio.sleep(5)
+                    return await getBroadcasterId(channelName)
     except:
-        time.sleep(5)
-        getBroadcasterId(channelName)
+        await asyncio.sleep(5)
+        return await getBroadcasterId(channelName)
 
 # starts a raid from your channel to another
-def raid(raiderChannelName, raideeChannelName):
+async def raid(raiderChannelName, raideeChannelName):
 
     # asking twitch to start raid
     try:
-        response = requests.get("https://api.twitch.tv/helix/users", headers = {"Client-ID": clientID, "Authorization": f"Bearer {accessToken}"})
-        rateLimit = response.headers.get("Ratelimit-Remaining")
-        if rateLimit != "0":
-            if getBroadcasterId(raiderChannelName) and getBroadcasterId(raideeChannelName):
-                raid_response = requests.post("https://api.twitch.tv/helix/raids", headers = {"Authorization": "Bearer " + accessToken, "Client-Id": clientID}, params = {"from_broadcaster_id": getBroadcasterId(raiderChannelName), "to_broadcaster_id": getBroadcasterId(raideeChannelName)})
-                if raid_response.status_code != 200:
-                    print("twitch fucked up")
-            else:
-                raid(raiderChannelName, raideeChannelName)
+        async with aiohttp.ClientSession() as session:
+            async with session.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": f"Bearer {accessToken}"}) as response:
+                rateLimit = response.headers.get("Ratelimit-Remaining")
+                if rateLimit != "0":
+                    if await getBroadcasterId(raiderChannelName) and await getBroadcasterId(raideeChannelName):
+                        async with session.post("https://api.twitch.tv/helix/raids", headers={"Authorization": "Bearer " + accessToken, "Client-Id": clientID}, params={"from_broadcaster_id": await getBroadcasterId(raiderChannelName), "to_broadcaster_id": await getBroadcasterId(raideeChannelName)}) as raid_response:
+                            if raid_response.status != 200:
+                                print("twitch fucked up")
 
-        # trying again
-        else:
-            time.sleep(5)
-            raid(raiderChannelName, raideeChannelName)
-
-    # waiting and trying again if internet goes out
+                    # trying again
+                    else:
+                        await raid(raiderChannelName, raideeChannelName)
+                else:
+                    await asyncio.sleep(5)
+                    await raid(raiderChannelName, raideeChannelName)
     except:
-        time.sleep(5)
-        raid(raiderChannelName, raideeChannelName)
+        await asyncio.sleep(5)
+        await raid(raiderChannelName, raideeChannelName)
 
     # waiting for raid cooldown
-    time.sleep(15)
+    await asyncio.sleep(5)
 
     # clicking the raid now button
-    openBrowser()
+    await openBrowser()
     imageLocation = pyautogui.locateOnScreen(os.path.abspath((os.path.join(directory, "media", "raidNow.png"))), confidence = .9)
     if imageLocation is not None:
         pyautogui.moveTo((imageLocation.left + (imageLocation.width / 2)), (imageLocation.top + (imageLocation.height / 2)))
@@ -131,7 +127,7 @@ def raid(raiderChannelName, raideeChannelName):
         print("script couldn't find the start raid button")
 
     # waiting to make sure raid went through
-    time.sleep(10)
+    await asyncio.sleep(5)
 
     # returning to your channel page
     pyautogui.keyDown("alt")
@@ -139,8 +135,8 @@ def raid(raiderChannelName, raideeChannelName):
     pyautogui.keyUp("alt")
 
 # opens obs and clicks the starts stream button
-def startStream():
-    openOBS()
+async def startStream():
+    await openOBS()
     imageLocation = pyautogui.locateOnScreen(os.path.abspath((os.path.join(directory, "media", "startStreamingPassive.png"))), confidence = .9)
     if imageLocation is not None:
         pyautogui.moveTo((imageLocation.left + (imageLocation.width / 2)), (imageLocation.top + (imageLocation.height / 2)))
@@ -153,11 +149,11 @@ def startStream():
             pyautogui.click()
         else:
             print("script couldn't find the start streaming active icon")
-    openGame()
+    await openGame()
 
 # opens obs and clicks stop stream button
-def stopStream():
-    openOBS()
+async def stopStream():
+    await openOBS()
     imageLocation = pyautogui.locateOnScreen(os.path.abspath((os.path.join(directory, "media", "stopStreamingPassive.png"))), confidence = .9)
     if imageLocation is not None:
         pyautogui.moveTo((imageLocation.left + (imageLocation.width / 2)), (imageLocation.top + (imageLocation.height / 2)))
@@ -171,10 +167,10 @@ def stopStream():
             pyautogui.click()
         else:
             print("script couldn't find the stop streaming active button")
-    openGame()
+    await openGame()
 
 # clicks the obs icon
-def openOBS():
+async def openOBS():
     imageLocation = pyautogui.locateOnScreen(os.path.abspath((os.path.join(directory, "media", "obs.png"))), confidence = .9)
     if imageLocation is not None:
         pyautogui.moveTo((imageLocation.left + (imageLocation.width / 2)), (imageLocation.top + (imageLocation.height / 2)))
@@ -183,7 +179,7 @@ def openOBS():
         print("script couldn't find the obs icon")
 
 # clicks the browser icon
-def openBrowser():
+async def openBrowser():
     imageLocation = pyautogui.locateOnScreen(os.path.abspath((os.path.join(directory, "media", "browser.png"))), confidence = .9)
     if imageLocation is not None:
         pyautogui.moveTo((imageLocation.left + (imageLocation.width / 2)), (imageLocation.top + (imageLocation.height / 2)))
@@ -192,7 +188,7 @@ def openBrowser():
         print("script couldn't find the browser icon")
 
 # clicks the icon for the game chat is playing
-def openGame():
+async def openGame():
     imageLocation = pyautogui.locateOnScreen(os.path.abspath((os.path.join(directory, "media", "game.png"))), confidence = .9)
     if imageLocation is not None:
         pyautogui.moveTo((imageLocation.left + (imageLocation.width / 2)), (imageLocation.top + (imageLocation.height / 2)))

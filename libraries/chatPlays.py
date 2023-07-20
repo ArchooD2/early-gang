@@ -3,9 +3,8 @@
 
 # imports
 import ctypes
-from libraries.charityDonoTTS import *
 import pynput
-from twitch_chat_irc import twitch_chat_irc
+import aiofile
 
 # change controller here
 from controllers.pokemonDsController import *
@@ -15,11 +14,11 @@ connection = None
 chatPlaying = False
 inputBotPlaying = False
 idleBotPlaying = False
-noRecentMessages = False
 autoSaving = False
 snackShot = False
 snackHealed = False
-pinging = False
+idleBotStatus = False
+timeSinceLastMessage = time.time()
 landminesActive = True
 snacks = ["sleepy", "chris", "burst", "silly", "cautious", "sonic"]
 currentSnack = "chris"
@@ -32,142 +31,84 @@ config.read(os.path.abspath((os.path.join(directory, "config.ini"))))
 snackDirectory = config.get("directories", "snack status")
 
 # holds down the given key
-def holdKey(key):
-    extra = ctypes.c_ulong(0)
-    ii_ = pynput._util.win32.INPUT_union()
-    ii_.ki = pynput._util.win32.KEYBDINPUT(0, key, 0x0008, 0, ctypes.cast(ctypes.pointer(extra), ctypes.c_void_p))
-    x = pynput._util.win32.INPUT(ctypes.c_ulong(1), ii_)
-    sendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
+async def holdKey(key):
+	extra = ctypes.c_ulong(0)
+	ii_ = pynput._util.win32.INPUT_union()
+	ii_.ki = pynput._util.win32.KEYBDINPUT(0, key, 0x0008, 0, ctypes.cast(ctypes.pointer(extra), ctypes.c_void_p))
+	x = pynput._util.win32.INPUT(ctypes.c_ulong(1), ii_)
+	sendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
 
 # releases the given key
-def releaseKey(key):
-    extra = ctypes.c_ulong(0)
-    ii_ = pynput._util.win32.INPUT_union()
-    ii_.ki = pynput._util.win32.KEYBDINPUT(0, key, 0x0008 | 0x0002, 0, ctypes.cast(ctypes.pointer(extra), ctypes.c_void_p))
-    x = pynput._util.win32.INPUT(ctypes.c_ulong(1), ii_)
-    sendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
+async def releaseKey(key):
+	extra = ctypes.c_ulong(0)
+	ii_ = pynput._util.win32.INPUT_union()
+	ii_.ki = pynput._util.win32.KEYBDINPUT(0, key, 0x0008 | 0x0002, 0, ctypes.cast(ctypes.pointer(extra), ctypes.c_void_p))
+	x = pynput._util.win32.INPUT(ctypes.c_ulong(1), ii_)
+	sendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
 
 # holds down the given key for the given number of seconds
-def holdAndReleaseKey(key, delay):
-    holdKey(key)
-    time.sleep(delay)
-    releaseKey(key)
+async def holdAndReleaseKey(key, delay):
+	await holdKey(key)
+	await asyncio.sleep(delay)
+	await releaseKey(key)
 
 # presses the autosave key every ten minutes
-def autoSave():
-	while autoSaving == True:
-		holdKey(keyCodes.get("SHIFT"))
-		holdAndReleaseKey(keyCodes.get("F1"), 1)
-		releaseKey(keyCodes.get("SHIFT"))
-		time.sleep(600)
+async def autoSave():
+	while autoSaving:
+		await holdKey(keyCodes.get("SHIFT"))
+		await holdAndReleaseKey(keyCodes.get("F1"), 1)
+		await releaseKey(keyCodes.get("SHIFT"))
+		await asyncio.sleep(600)
 
 # starts autosaving
-def startAutoSave():
+async def startAutoSave():
 	global autoSaving
 	autoSaving = True
-	autoSavingThread = threading.Thread(target = autoSave)
-	autoSavingThread.start()
+	asyncio.create_task(autoSave())
 
 # stops autosaving
-def stopAutoSave():
+async def stopAutoSave():
 	global autoSaving
 	autoSaving = False
 
-# establishes connection to twitch
-def connectToTwitchChat():
-	global connection
-	connection = twitch_chat_irc.TwitchChatIRC()
-
-def disconnectFromTwitchChat():
-	global connection
-	connection.close_connection()
-	connection = None
-
 # starts the input bot
-def startInputBot():
+async def startInputBot():
 	global inputBotPlaying
 	inputBotPlaying = True
-	inputBotThread = threading.Thread(target = inputBot)
-	inputBotThread.start()
+	asyncio.create_task(inputBot())
 
 # stops the input bot
-def stopInputBot():
+async def stopInputBot():
 	global inputBotPlaying
 	inputBotPlaying = False
 
 # starts idle bot
-def startIdleBot():
+async def startIdleBot():
 	global idleBotPlaying
 	idleBotPlaying = True
-	idleBotThread = threading.Thread(target = idleBot)
-	idleBotThread.start()
+	asyncio.create_task(idleBot())
 
 # stops the idle bot
-def stopIdleBot():
+async def stopIdleBot():
 	global idleBotPlaying
 	idleBotPlaying = False
 
 # allows the program to start taking and executing commands from chat messages
-def startChatPlays():
+async def startChatPlays():
 	global chatPlaying
 	chatPlaying = True
-	chatThread = threading.Thread(target = takeChatInputs)
-	chatThread.start()
 
 # stops the program from executing commands from chat
-def stopChatPlays():
+async def stopChatPlays():
 	global chatPlaying
 	chatPlaying = False
 
-# starts the loop needed to get chat messages from twitch and activates idle bot if no messages after a certain time
-def takeChatInputs():
-	global connection
-	global noRecentMessages
-	while connection is not None:
-		message = connection.listen(yourChannelName, on_message = controller, timeout = 300)
-		noRecentMessages = True
-	print("connect to twitch before trying to receive messages bozo")
-
-# starts pinging
-def startInternetPing():
-	global pinging
-	pinging = True
-	pingingThread = threading.Thread(target = internetPing)
-	pingingThread.start()
-
-# stops pinging
-def stopInternetPing():
-	global pinging
-	pinging = False
-
-# checks internet status by pinging google
-def internetPing():
-	while pinging:
-		try:
-			response = requests.get('http://www.google.com', timeout = 5)
-
-		# resets websockets when reconnection after disconnecting
-		except:
-			connected = False
-			while not connected:
-				try:
-					response = requests.get('http://www.google.com', timeout = 5)
-					disconnectFromTwitchChat()
-					disconnectFromObs()
-					time.sleep(5)
-					connectToTwitchChat()
-					connectToObs()
-					connected = True
-				except:
-					time.sleep(5)
-
 # updates snack status text in obs
-def updateSnatus():
-	with open(os.path.abspath(snackDirectory), "w") as file:
-		if snackShot:
-			file.write(currentSnack + " snack is dead")
+async def updateSnatus():
+	async with aiofile.async_open(os.path.abspath(snackDirectory), "w") as file:
+		if idleBotStatus:
+			await file.write("idle bot is active")
+		elif snackShot and not snackHealed:
+			await file.write(currentSnack + " snack is dead")
 		else:
-			file.write(currentSnack + " snack is alive")
-
-# resetting snack status when script is ran
-updateSnatus()
+			await file.write(currentSnack + " snack is alive")

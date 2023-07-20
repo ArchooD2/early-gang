@@ -5,17 +5,17 @@ from obswebsocket import obsws
 from obswebsocket import requests as obwsrequests
 from libraries.autoStream import *
 import os
-import time
-import threading
 import pyttsx3
 import pyautogui
 import configparser
 import requests
+import aiohttp
+import aiofile
 
 # setting up variables
 ws = None
 ttsOn = False
-lastDonation = ""
+lastDonation = []
 screenWidth, screenHeight = pyautogui.size()
 
 # reading config
@@ -42,21 +42,19 @@ if refreshToken == "":
         file.writelines(lines)
 
 # connecting to obs
-def connectToObs():
+async def connectToObs():
     global ws
     ws = obsws("localhost", 4444, websocketPassword)
     ws.connect()
 
 # closing obs connection
-def disconnectFromObs():
+async def disconnectFromObs():
     global ws
     ws.disconnect()
 
 # finds the scene where the given source name is located
-def getScene(source):
+async def getScene(source):
     global ws
-    headerFound = False
-    bodyFound = False
 
     # get scene names
     sceneData = ws.call(obwsrequests.GetSceneList())
@@ -73,9 +71,8 @@ def getScene(source):
                 # return the source whose name matches the given one
                 return name
 
-
 # takes donation info and tells obs to display it
-def donationAlert(name, amount, charity, message):
+async def donationAlert(name, amount, charity, message):
 
     # prepping engine
     engine = pyttsx3.init()
@@ -101,63 +98,58 @@ def donationAlert(name, amount, charity, message):
     formatted_text = ''.join(text)
 
     # change donation text
-    with open(os.path.abspath(ttsBodyDirectory), "w") as file:
-        file.write(formatted_text)
-    with open(os.path.abspath(ttsHeaderDirectory), "w") as file:
-        file.write(f"{name} donated ${amount} to {charity}")
+    async with aiofile.async_open(os.path.abspath(ttsBodyDirectory), "w") as file:
+        await file.write(formatted_text)
+    async with aiofile.async_open(os.path.abspath(ttsHeaderDirectory), "w") as file:
+        await file.write(f"{name} donated ${amount} to {charity}")
 
     # give obs time to update text
-    time.sleep(2)
-
-    # change source positions based on text size
-    # quarantined rn
-    '''
-    response = ws.call(obwsrequests.GetSceneItemProperties(sceneName = getScene("tts header"), item = "tts header"))
-    headerWidth = response.getWidth()
-    headerHeight = response.getHeight()
-    response = ws.call(obwsrequests.GetSceneItemProperties(sceneName = getScene("tts body"), item = "tts body"))
-    bodyWidth = response.getWidth()
-    ws.call(obwsrequests.SetSceneItemProperties(sceneName= getScene("tts header"), item = "tts header", position = {"x": (screenWidth - headerWidth - 50), "y": 50}))
-    ws.call(obwsrequests.SetSceneItemProperties(sceneName = getScene("tts body"), item="tts body", position = {"x": (screenWidth - headerWidth) + (headerWidth - bodyWidth)/2 - 50, "y": 50 + headerHeight}))
-    '''
+    await asyncio.sleep(2)
 
     # tell obs to show sources
-    ws.call(obwsrequests.SetSceneItemProperties(sceneName = getScene("tts body"), item = "tts body", visible = True))
-    ws.call(obwsrequests.SetSceneItemProperties(sceneName = getScene("tts header"), item = "tts header", visible = True))
+    ws.call(obwsrequests.SetSceneItemProperties(sceneName = await getScene("tts body"), item = "tts body", visible = True))
+    ws.call(obwsrequests.SetSceneItemProperties(sceneName = await getScene("tts header"), item = "tts header", visible = True))
 
     # speak message
     engine.say(message)
     engine.runAndWait()
 
     # tell obs to hide sources
-    ws.call(obwsrequests.SetSceneItemProperties(sceneName = getScene("tts body"), item = "tts body", visible = False))
-    ws.call(obwsrequests.SetSceneItemProperties(sceneName = getScene("tts header"), item ="tts header", visible = False))
+    ws.call(obwsrequests.SetSceneItemProperties(sceneName = await getScene("tts body"), item = "tts body", visible = False))
+    ws.call(obwsrequests.SetSceneItemProperties(sceneName = await getScene("tts header"), item ="tts header", visible = False))
 
 # starts taking and displaying tts messages
-def startTTS():
+async def startTTS():
     global ttsOn
     ttsOn = True
-    ttsThread = threading.Thread(target=tts)
-    ttsThread.start()
+    asyncio.create_task(tts())
 
 # stops taking and displaying tts messages
-def stopTTS():
+async def stopTTS():
     global ttsOn
     ttsOn = False
 
 # infinite loop that looks for new donations if tts is on
-def tts():
+async def tts():
     global ttsOn
     global ws
     global lastDonation
 
-    while ttsOn:
-        campaignData = requests.get("https://v5api.tiltify.com/api/public/users/" + (requests.get("https://v5api.tiltify.com/api/public/current-user", headers = {"Authorization": "Bearer " + (requests.post("https://v5api.tiltify.com/oauth/token",data={"client_id": clientID, "client_secret": clientSecret, "grant_type": "refresh_token", "refresh_token": refreshToken}).json().get("access_token"))}).json().get("data").get("id")) + "/campaigns", headers = {"Authorization": "Bearer " + requests.post("https://v5api.tiltify.com/oauth/token",data={"client_id": clientID, "client_secret": clientSecret, "grant_type": "refresh_token", "refresh_token": refreshToken}).json().get("access_token")})
-        ids = []
-        for x in campaignData.json().get("data"):
-            ids += [[x.get("id"), x.get("name")]]
-        for id in ids:
-            donationData = requests.get("https://v5api.tiltify.com/api/public/campaigns/" + str(id[0]) + "/donations", headers = {"Authorization": "Bearer " + requests.post("https://v5api.tiltify.com/oauth/token",data={"client_id": clientID, "client_secret": clientSecret, "grant_type": "refresh_token", "refresh_token": refreshToken}).json().get("access_token")}).json().get("data")
-            if donationData != [] and donationData != lastDonation:
-                lastDonation = donationData
-                donationAlert(donationData[0].get("donor_name"), donationData[0].get("amount").get("value"), id[1], donationData[0].get("donor_comment"))
+    async with aiohttp.ClientSession() as session:
+        while ttsOn:
+            campaign_response = await session.get("https://v5api.tiltify.com/api/public/users/" + (requests.get("https://v5api.tiltify.com/api/public/current-user", headers = {"Authorization": "Bearer " + (requests.post("https://v5api.tiltify.com/oauth/token",data={"client_id": clientID, "client_secret": clientSecret, "grant_type": "refresh_token", "refresh_token": refreshToken}).json().get("access_token"))}).json().get("data").get("id")) + "/campaigns", headers = {"Authorization": "Bearer " + requests.post("https://v5api.tiltify.com/oauth/token",data={"client_id": clientID, "client_secret": clientSecret, "grant_type": "refresh_token", "refresh_token": refreshToken}).json().get("access_token")})
+            campaignData = await campaign_response.json()
+
+            ids = []
+            for x in campaignData.get("data"):
+                ids.append([x.get("id"), x.get("name")])
+
+            for id in ids:
+                donation_response = await session.get("https://v5api.tiltify.com/api/public/campaigns/" + str(id[0]) + "/donations", headers = {"Authorization": "Bearer " + requests.post("https://v5api.tiltify.com/oauth/token", data={"client_id": clientID, "client_secret": clientSecret, "grant_type": "refresh_token", "refresh_token": refreshToken}).json().get("access_token")})
+                donationData = await donation_response.json()
+                donationData = donationData.get("data")
+
+                if donationData != [] and donationData not in lastDonation:
+                    lastDonation += [donationData]
+                    await donationAlert(donationData[0].get("donor_name"), donationData[0].get("amount").get("value"), id[1], donationData[0].get("donor_comment"))
+            await asyncio.sleep(5)

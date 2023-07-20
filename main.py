@@ -1,73 +1,71 @@
-from bots.commandBot import *
-from bots.pollBot import *
-from libraries.chatPlays import *
+
+# imports
+from bots.twitch import pollBot, commandBot, econBot
+from bots.discord import gwrbullBot, ramcicleBot, sna1lBot, fizzyghostBot, birdmanBot
 from libraries.charityDonoTTS import *
-from bots.panicBot import *
-from bots.gwrbullBot import *
+from libraries.chatPlays import *
+from libraries.autoStream import *
 
-# setting stuff up
-econBotThread = startEconBot()
-commandBotThread = startCommandBot()
-pollBotThread = startPollBot()
-panicBotThread = startPanicBot()
-gwrbotThread = startGwrbullBot()
-connectToObs()
-connectToTwitchChat()
+# main code loop
+async def main():
 
-# so you don't have to restart stream
-if isLive(yourChannelName):
-    startTTS()
-    startChatPlays()
-    startAutoSave()
-    startIdleBot()
-    startInputBot()
-    startInternetPing()
+    # so you don't have to restart stream
+    if await isLive(yourChannelName):
+        await startTTS()
+        await startChatPlays()
+        await startAutoSave()
+        await startIdleBot()
+        await startInputBot()
 
-while True:
+    # infinite loop to check stream statuses
+    while True:
 
-    # if streamer goes live
-    if (isLive(yourChannelName) and isLive(streamerChannelName)):
+        # if streamer goes live
+        if await isLive(yourChannelName) and await isLive(streamerChannelName):
 
-        # shut down everything
-        if ttsOn:
-            stopTTS()
-        if chatPlaying:
-            stopChatPlays()
-        if idleBotPlaying:
-            stopIdleBot()
-        if inputBotPlaying:
-            stopInputBot()
-        if autoSaving:
-            stopAutoSave()
-        if pinging:
-            stopInternetPing()
+            # shut down everything
+            if ttsOn:
+                await stopTTS()
+            if chatPlaying:
+                await stopChatPlays()
+            if idleBotPlaying:
+                await stopIdleBot()
+            if inputBotPlaying:
+                await stopInputBot()
+            if autoSaving:
+                await stopAutoSave()
 
-        # end stream
-        if isLive(yourChannelName):
-            raid(yourChannelName, streamerChannelName)
-            stopStream()
+            # end stream
+            if await isLive(yourChannelName):
+                await raid(yourChannelName, streamerChannelName)
+                await stopStream()
 
-    # if streamer goes offline
-    elif (not isLive(yourChannelName) and not isLive(streamerChannelName)):
-        # start stream
-        if not isLive(yourChannelName):
-            startStream()
-        if not ttsOn:
-            startTTS()
-        if not chatPlaying:
-            startChatPlays()
-        if not autoSaving:
-            startAutoSave()
-        if not idleBotPlaying:
-            startIdleBot()
-        if not inputBotPlaying:
-            startInputBot()
-        if not pinging:
-            startInternetPing()
+        # if streamer goes offline
+        elif not await isLive(yourChannelName) and not await isLive(streamerChannelName):
 
-# so asyncio doesn't yell at me :)
-econBotThread.join()
-commandBotThread.join()
-pollBotThread.join()
-panicBotThread.join()
-gwrbotThread.join()
+            # start stream
+            if not await isLive(yourChannelName):
+                await startStream()
+            if not ttsOn:
+                await startTTS()
+            if not chatPlaying:
+                await startChatPlays()
+            if not autoSaving:
+                await startAutoSave()
+            if not idleBotPlaying:
+                await startIdleBot()
+            if not inputBotPlaying:
+                await startInputBot()
+        await asyncio.sleep(3)
+
+# run main and all your other background tasks here
+async def setup():
+    await asyncio.gather(connectToObs(), chatPlays.updateSnatus(), pollBot.Bot().start(), commandBot.Bot().start(), econBot.Bot().start(), gwrbullBot.bot.start(gwrbullBot.gwrbullBotToken), ramcicleBot.bot.start(ramcicleBot.ramcicleBotToken), sna1lBot.bot.start(sna1lBot.sna1lBotToken), asyncio.create_task(main()))
+
+# don't touch this
+try:
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(setup())
+    loop.run_forever()
+except Exception as e:
+    print(e)
