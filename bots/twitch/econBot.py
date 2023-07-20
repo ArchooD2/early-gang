@@ -118,13 +118,31 @@ class Bot(commands.Bot):
     @commands.command()
     async def bp(self, ctx: commands.Context):
 
-        async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-            async with db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
-                result = await cursor.fetchone()
+        # checking own points
+        if ctx.message.content == "!bp" or ctx.message.content == "!bp ":
 
-        # sending result if id exists
-        if result:
-            await ctx.send("[bot] " + ctx.author.name + " has " + str(result[2]) + " basement pesos")
+            async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
+                async with db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
+                    result = await cursor.fetchone()
+
+            # sending result if id exists
+            if result:
+                await ctx.send("[bot] " + ctx.author.name + " has " + str(result[2]) + " basement pesos")
+
+        # letting whitelisters check others' points
+        else:
+            if ctx.author.name in whiteListers:
+
+                ctx.message.content = ctx.message.content.replace("!bp ", "")
+                async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
+                    async with db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.message.content),)) as cursor:
+                        result = await cursor.fetchone()
+
+                        # sending result if id exists
+                        if result:
+                            await ctx.send("[bot] " + ctx.message.content + " has " + str(result[2]) + " basement pesos")
+
+
 
     # first user to redeem this gets points but those afterward lose points
     @commands.command()
