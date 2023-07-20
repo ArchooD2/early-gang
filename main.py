@@ -60,7 +60,7 @@ async def main():
 
 # run main and all your other background tasks here
 async def setup():
-    await asyncio.gather(connectToObs(), chatPlays.updateSnatus(), pollBot.Bot().start(), commandBot.Bot().start(), econBot.Bot().start(), gwrbullBot.bot.start(gwrbullBot.gwrbullBotToken), ramcicleBot.bot.start(ramcicleBot.ramcicleBotToken), sna1lBot.bot.start(sna1lBot.sna1lBotToken), asyncio.create_task(main()))
+    await asyncio.gather(connectToObs(), chatPlays.updateSnatus(), pollBot.Bot().start(), commandBot.Bot().start(), econBot.Bot().start(), gwrbullBot.bot.start(gwrbullBot.gwrbullBotToken), ramcicleBot.bot.start(ramcicleBot.ramcicleBotToken), sna1lBot.bot.start(sna1lBot.sna1lBotToken), birdmanBot.bot.start(birdmanBot.birdmanBotToken), asyncio.create_task(main()))
 
 # don't touch this
 try:
