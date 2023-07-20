@@ -335,7 +335,7 @@ async def mashB(pressTime):
     while mashTime <= 2:
         await chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("K"), pressTime)
         mashTime += pressTime + .3
-        time.sleep(.3)
+        await asyncio.sleep(.3)
 
 async def x(pressTime):
     await chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("I"), pressTime)
