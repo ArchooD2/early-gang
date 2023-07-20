@@ -543,8 +543,8 @@ class Bot(commands.Bot):
 
                     # disabling input bot
                     chatPlays.snackShot = True
-                    await ctx.send(
-                        "[bot] " + ctx.author.name + " " + action + " " + chatPlays.currentSnack + " snack with " + item)
+                    chatPlays.snackHealed = False
+                    await ctx.send("[bot] " + ctx.author.name + " " + action + " " + chatPlays.currentSnack + " snack with " + item)
                     if not chatPlays.idleBotStatus:
                         await updateSnatus()
                     asyncio.create_task(self.snackWait())
