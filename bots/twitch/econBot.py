@@ -671,13 +671,13 @@ class Bot(commands.Bot):
 
                 # update database for all users in chat
                 async with databaseLock:
-                    async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
-                        async with db.execute("SELECT * FROM economy WHERE id=?", (chatter[0],)) as cursor:
-                            result = await cursor.fetchone()
+                    for chatter in chatters:
+                        async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
+                            async with db.execute("SELECT * FROM economy WHERE id=?", (chatter[0],)) as cursor:
+                                result = await cursor.fetchone()
 
-                            for chatter in chatters:
                                 # setting points and watchtime
-                                if result and chatter:
+                                if result:
                                     if (time.time() - chatter[2]) >= 300:
                                         await db.execute("UPDATE economy SET points=? WHERE id=?", (result[2] + 10, chatter[0]))
                                         chatter[2] = time.time()
@@ -685,7 +685,7 @@ class Bot(commands.Bot):
                                     await db.execute("UPDATE economy SET watchtime=? WHERE id=?", (float(result[1]) + (time.time() - chatter[1]), chatter[0]))
                                     chatter[1] = time.time()
 
-                            await db.commit()
+                                    await db.commit()
             else:
                 live = False
 
