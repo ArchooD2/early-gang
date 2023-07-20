@@ -1,7 +1,7 @@
 # responds to basic commands in chat
 # don't fuck with this too much unless you're familiar with twitchio and how it works
 # not much documentation here because even i don't know what the fuck this object oriented programming is doing in python
-
+import base64
 # imports
 from urllib.parse import urlencode
 from bots.twitch.econBot import *
@@ -142,7 +142,7 @@ class Bot(commands.Bot):
         async with aiohttp.ClientSession() as session:
 
             # create access token
-            async with session.post("https://accounts.spotify.com/api/token", headers={"Authorization": f"Basic {base64_encoded_credentials}"}, data={"grant_type": "refresh_token", "refresh_token": spotifyRefreshToken}) as response:
+            async with session.post("https://accounts.spotify.com/api/token", headers={"Authorization": "Basic " + base64.b64encode(f"{spotifyClientID}:{spotifyClientSecret}".encode()).decode()}, data={"grant_type": "refresh_token", "refresh_token": spotifyRefreshToken}) as response:
                 data = await response.json()
                 if "access_token" in data:
                     accessToken = data["access_token"]
