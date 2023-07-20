@@ -53,7 +53,7 @@ class Bot(commands.Bot):
 
         # finding chatter's time
         for element in chatters:
-            if element[0] == await getBroadcasterId(user.name):
+            if element[0] == getBroadcasterId(user.name):
                 chatter = element
                 break
         else:

@@ -37,15 +37,13 @@ async def idleBot():
             if dice == 1:
                 input = random.choice([await r(pressTime), await l(pressTime), await pokemonGbaController.a(pressTime), await pokemonGbaController.b(pressTime), await x(pressTime), await y(pressTime), await pokemonGbaController.select(pressTime), await pokemonGbaController.start(pressTime)])
                 input()
-
             # 75% chance of directionals
             else:
                 input = random.choice([await pokemonGbaController.up(pressTime), await pokemonGbaController.down(pressTime), await pokemonGbaController.left(pressTime), await pokemonGbaController.right(pressTime), await pokemonGbaController.wander(4, holdTime)])
                 input()
         else:
-            if chatPlays.idleBotStatus:
-                chatPlays.idleBotStatus = False
-                await chatPlays.updateSnatus()
+            chatPlays.idleBotStatus = False
+            await chatPlays.updateSnatus()
 
 # makes inputs every so often
 async def inputBot():
