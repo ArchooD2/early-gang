@@ -20,7 +20,8 @@ bot = discord.Client(intents = intents)
 # sends deleted message content
 @bot.event
 async def on_message_delete(message):
-    if message.author.id == 1128463600537845890:
+
+    if message.author.id == 1065034277756080158:
 
         # send message content if any
         if len(message.content) > 0:
@@ -31,12 +32,14 @@ async def on_message_delete(message):
             for attachment in message.attachments:
                 await attachment.save(os.path.abspath(os.path.join(directory, "tempAttachments", attachment.filename)))
                 async with aiofile.async_open(os.path.join(os.path.abspath(os.path.join(directory, "tempAttachments", attachment.filename))), "rb") as file:
-                    await message.channel.send(file = discord.File(file))
+                    await message.channel.send(file = discord.File(os.path.join(os.path.abspath(os.path.join(directory, "tempAttachments", attachment.filename)))))
                     await file.close()
                     os.remove(os.path.abspath(os.path.join(directory, "tempAttachments", attachment.filename)))
 
 # sends message edit content
 @bot.event
 async def on_message_edit(before, after):
-    if str(before.author.id) == 1128463600537845890 and before.content != after.content:
+    print(before.content, after.content, before.author.id)
+    if before.author.id == 1065034277756080158 and before.content != after.content:
+        print(before.content, after.content)
         await before.channel.send("edited \"" + before.content + "\" to \"" + after.content + "\"")
