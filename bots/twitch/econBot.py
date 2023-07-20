@@ -220,7 +220,7 @@ class Bot(commands.Bot):
                     async with databaseLock:
                         async with aiosqlite.connect( os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
                             cursor = await db.cursor()
-                            await cursor.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),))
+                            await cursor.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.message.content[0]),))
                             result = await cursor.fetchone()
                             await cursor.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] + int(ctx.message.content[1])), await getBroadcasterId(ctx.message.content[0])))
                             await db.commit()
