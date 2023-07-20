@@ -42,8 +42,10 @@ async def idleBot():
                 input = random.choice([await pokemonGbaController.up(pressTime), await pokemonGbaController.down(pressTime), await pokemonGbaController.left(pressTime), await pokemonGbaController.right(pressTime), await pokemonGbaController.wander(4, holdTime)])
                 input()
         else:
-            chatPlays.idleBotStatus = False
-            await chatPlays.updateSnatus()
+            if chatPlays.idleBotStatus:
+                chatPlays.idleBotStatus = False
+                await chatPlays.updateSnatus()
+            await asyncio.sleep(5)
 
 # makes inputs every so often
 async def inputBot():
