@@ -63,4 +63,4 @@
   - in the app's bot settings right under username click to make a token then paste it into the config
 
 ### questions? comments? concerns?
-### message kai_2910 on discord for the best chance of a timely response :)
+### message sna1l_boy on discord for the best chance of a timely response :)
