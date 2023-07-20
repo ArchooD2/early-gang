@@ -198,7 +198,7 @@ class Bot(commands.Bot):
                 ctx.message.content = ctx.message.content.replace("!giveBp ", "")
                 ctx.message.content = ctx.message.content.split(", ")
 
-                if getBroadcasterId(ctx.message.content[0]) and ctx.message.content[0] not in whiteListers:
+                if getBroadcasterId(ctx.message.content[0]) and ctx.message.content[0] not in whiteListers or ctx.author.name == ctx.message.content[0]:
                     async with databaseLock:
                         async with aiosqlite.connect( os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
                             cursor = await db.cursor()
@@ -234,10 +234,10 @@ class Bot(commands.Bot):
                     async with databaseLock:
                         async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
                             cursor = await db.cursor()
-                            await cursor.execute("SELECT * FROM economy WHERE id=?", (getBroadcasterId(ctx.author.name),))
+                            await cursor.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),))
                             giver = await cursor.fetchone()
 
-                            await cursor.execute("SELECT * FROM economy WHERE id=?", (getBroadcasterId(ctx.message.content[0]),))
+                            await cursor.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.message.content[0]),))
                             taker = await cursor.fetchone()
 
                             # check if giver has enough points
