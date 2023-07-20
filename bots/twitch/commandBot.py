@@ -142,7 +142,7 @@ class Bot(commands.Bot):
         async with aiohttp.ClientSession() as session:
 
             # create access token
-            async with session.post("https://accounts.spotify.com/api/token", auth = (spotifyClientID, spotifyClientSecret), data = {"grant_type": "refresh_token", "refresh_token": spotifyRefreshToken}) as response:
+            async with session.post("https://accounts.spotify.com/api/token", headers={"Authorization": f"Basic {base64_encoded_credentials}"}, data={"grant_type": "refresh_token", "refresh_token": spotifyRefreshToken}) as response:
                 data = await response.json()
                 if "access_token" in data:
                     accessToken = data["access_token"]

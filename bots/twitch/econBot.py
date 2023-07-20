@@ -53,7 +53,7 @@ class Bot(commands.Bot):
 
         # finding chatter's time
         for element in chatters:
-            if element[0] == getBroadcasterId(user.name):
+            if element[0] == await getBroadcasterId(user.name):
                 chatter = element
                 break
         else:
@@ -64,9 +64,9 @@ class Bot(commands.Bot):
             async with databaseLock:
                 async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
                     cursor = await db.cursor()
-                    await cursor.execute("SELECT * FROM economy WHERE id=?", (getBroadcasterId(user.name),))
+                    await cursor.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(user.name),))
                     result = await cursor.fetchone()
-                    await cursor.execute("UPDATE economy SET watchtime=? WHERE id=?", ((float(result[1]) + (time.time() - chatter[1])), getBroadcasterId(user.name)))
+                    await cursor.execute("UPDATE economy SET watchtime=? WHERE id=?", ((float(result[1]) + (time.time() - chatter[1])), await getBroadcasterId(user.name)))
                     await db.commit()
 
             # removing chatter from active chatter list
@@ -216,7 +216,7 @@ class Bot(commands.Bot):
                 ctx.message.content = ctx.message.content.replace("!giveBp ", "")
                 ctx.message.content = ctx.message.content.split(", ")
 
-                if getBroadcasterId(ctx.message.content[0]) and ctx.message.content[0] not in whiteListers or ctx.author.name == ctx.message.content[0]:
+                if await getBroadcasterId(ctx.message.content[0]) and ctx.message.content[0] not in whiteListers or ctx.author.name == ctx.message.content[0]:
                     async with databaseLock:
                         async with aiosqlite.connect( os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
                             cursor = await db.cursor()
@@ -246,7 +246,7 @@ class Bot(commands.Bot):
                     await ctx.send("[bot] nice try")
 
                 # if both users exist
-                elif getBroadcasterId(ctx.author.name) and getBroadcasterId(ctx.message.content[0]):
+                elif await getBroadcasterId(ctx.author.name) and await getBroadcasterId(ctx.message.content[0]):
 
                     # finding giver and taker
                     async with databaseLock:
@@ -414,7 +414,7 @@ class Bot(commands.Bot):
                         await ctx.send("[bot] not enough basement pesos")
                     else:
                         if ctx.author.name not in whiteListers:
-                            await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 1000), getBroadcasterId(ctx.author.name)))
+                            await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 1000), await getBroadcasterId(ctx.author.name)))
                             await db.commit()
 
                         dice = random.randint(1, 100)
@@ -677,7 +677,7 @@ class Bot(commands.Bot):
 
                             for chatter in chatters:
                                 # setting points and watchtime
-                                if result:
+                                if result and chatter:
                                     if (time.time() - chatter[2]) >= 300:
                                         await db.execute("UPDATE economy SET points=? WHERE id=?", (result[2] + 10, chatter[0]))
                                         chatter[2] = time.time()
