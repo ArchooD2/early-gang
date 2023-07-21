@@ -1,6 +1,5 @@
 # imports
 import time
-
 from libraries import chatPlays
 from libraries.autoStream import *
 import random
@@ -34,18 +33,42 @@ async def idleBot():
             # 25% chance of non directionals
             dice = random.randint(1, 4)
             if dice == 1:
-                input = random.choice([await a(pressTime), await b(pressTime), await x(pressTime), await y(pressTime), await select(pressTime), await start(pressTime)])
-                input()
+                dice = random.randint(1, 6)
+                match dice:
+                    case 1:
+                        await a(pressTime)
+                    case 2:
+                        await b(pressTime)
+                    case 3:
+                        await x(pressTime)
+                    case 4:
+                        await y(pressTime)
+                    case 5:
+                        await select(pressTime)
+                    case 6:
+                        await start(pressTime)
 
             # 75% chance of directionals
             else:
-                input = random.choice([await up(pressTime), await down(pressTime), await left(pressTime), await right(pressTime), await wander(4, holdTime)])
-                input()
+                dice = random.randint(1, 5)
+                match dice:
+                    case 1:
+                        await up(pressTime)
+                    case 2:
+                        await down(pressTime)
+                    case 3:
+                        await left(pressTime)
+                    case 4:
+                        await right(pressTime)
+                    case 5:
+                        await wander(4, holdTime)
 
         # tell obs idle bot is inactive
         else:
-            chatPlays.idleBotActive = False
-            await chatPlays.updateSnatus()
+            if chatPlays.idleBotStatus:
+                chatPlays.idleBotStatus = False
+                await chatPlays.updateSnatus()
+            await asyncio.sleep(5)
 
 # makes inputs every so often
 async def inputBot():
@@ -63,8 +86,42 @@ async def inputBot():
                 # 5% chance of no action
                 dice = random.randint(1, 100)
                 if dice < 96:
-                    input = random.choice([await up(pressTime), await down(pressTime), await left(pressTime), await right(pressTime), await holdUp(holdTime), await holdDown(holdTime), await holdLeft(holdTime), await holdDown(holdTime), await a(pressTime), await holdA(holdTime), await b(pressTime), await holdB(), await x(pressTime), await y(pressTime), await select(pressTime), await start(pressTime), await wander(2, holdTime)])
-                    input()
+                    dice = random.randint(1, 17)
+                    match dice:
+                        case 1:
+                            await up(pressTime)
+                        case 2:
+                            await down(pressTime)
+                        case 3:
+                            await left(pressTime)
+                        case 4:
+                            await right(pressTime)
+                        case 5:
+                            await holdUp(holdTime)
+                        case 6:
+                            await holdDown(holdTime)
+                        case 7:
+                            await holdLeft(holdTime)
+                        case 8:
+                            await holdDown(holdTime)
+                        case 9:
+                            await a(pressTime)
+                        case 10:
+                            await holdA(holdTime)
+                        case 11:
+                            await b(pressTime)
+                        case 12:
+                            await holdB()
+                        case 13:
+                            await x(pressTime)
+                        case 14:
+                            await y(pressTime)
+                        case 15:
+                            await select(pressTime)
+                        case 16:
+                            await start(pressTime)
+                        case 17:
+                            await wander(2, holdTime)
 
             # chris snack controls
             elif chatPlays.currentSnack == "chris":
@@ -75,8 +132,41 @@ async def inputBot():
                 # 33% chance of no action
                 dice = random.randint(1, 3)
                 if dice != 1:
-                    input = random.choice([await up(pressTime), await down(pressTime), await left(pressTime), await right(pressTime), await holdUp(holdTime), await holdDown(holdTime), await holdLeft(holdTime), await holdDown(holdTime), await a(pressTime), await holdA(holdTime), await b(pressTime), await holdB(), await x(pressTime), await y(pressTime), await select(pressTime), await start(pressTime), await wander(2, holdTime)])
-                    input()
+                    match dice:
+                        case 1:
+                            await up(pressTime)
+                        case 2:
+                            await down(pressTime)
+                        case 3:
+                            await left(pressTime)
+                        case 4:
+                            await right(pressTime)
+                        case 5:
+                            await holdUp(holdTime)
+                        case 6:
+                            await holdDown(holdTime)
+                        case 7:
+                            await holdLeft(holdTime)
+                        case 8:
+                            await holdDown(holdTime)
+                        case 9:
+                            await a(pressTime)
+                        case 10:
+                            await holdA(holdTime)
+                        case 11:
+                            await b(pressTime)
+                        case 12:
+                            await holdB()
+                        case 13:
+                            await x(pressTime)
+                        case 14:
+                            await y(pressTime)
+                        case 15:
+                            await select(pressTime)
+                        case 16:
+                            await start(pressTime)
+                        case 17:
+                            await wander(2, holdTime)
 
             # burst snack controls
             elif chatPlays.currentSnack == "burst":
@@ -88,8 +178,42 @@ async def inputBot():
                 dice = random.randint(1, 10)
                 if dice != 1:
                     for i in range(5):
-                        input = random.choice([await up(pressTime), await down(pressTime), await left(pressTime), await right(pressTime), await holdUp(holdTime), await holdDown(holdTime), await holdLeft(holdTime), await holdDown(holdTime), await a(pressTime), await holdA(holdTime), await b(pressTime), await holdB(), await x(pressTime), await y(pressTime), await select(pressTime), await start(pressTime), await wander(2, holdTime)])
-                        input()
+                        dice = random.randint(1, 17)
+                        match dice:
+                            case 1:
+                                await up(pressTime)
+                            case 2:
+                                await down(pressTime)
+                            case 3:
+                                await left(pressTime)
+                            case 4:
+                                await right(pressTime)
+                            case 5:
+                                await holdUp(holdTime)
+                            case 6:
+                                await holdDown(holdTime)
+                            case 7:
+                                await holdLeft(holdTime)
+                            case 8:
+                                await holdDown(holdTime)
+                            case 9:
+                                await a(pressTime)
+                            case 10:
+                                await holdA(holdTime)
+                            case 11:
+                                await b(pressTime)
+                            case 12:
+                                await holdB()
+                            case 13:
+                                await x(pressTime)
+                            case 14:
+                                await y(pressTime)
+                            case 15:
+                                await select(pressTime)
+                            case 16:
+                                await start(pressTime)
+                            case 17:
+                                await wander(2, holdTime)
 
             # silly snack controls
             elif chatPlays.currentSnack == "silly":
@@ -100,8 +224,26 @@ async def inputBot():
                 # 33% chance of no action
                 dice = random.randint(1, 3)
                 if dice != 1:
-                    input = random.choice([await up(pressTime), await down(pressTime), await left(pressTime), await right(pressTime), await holdUp(holdTime), await holdDown(holdTime), await holdLeft(holdTime), await holdDown(holdTime), await wander(2, holdTime)])
-                    input()
+                    dice = random.randint(1, 9)
+                    match dice:
+                        case 1:
+                            await up(pressTime)
+                        case 2:
+                            await down(pressTime)
+                        case 3:
+                            await left(pressTime)
+                        case 4:
+                            await right(pressTime)
+                        case 5:
+                            await holdUp(holdTime)
+                        case 6:
+                            await holdDown(holdTime)
+                        case 7:
+                            await holdLeft(holdTime)
+                        case 8:
+                            await holdDown(holdTime)
+                        case 9:
+                            await wander(2, holdTime)
 
             # cautious snack controls
             elif chatPlays.currentSnack == "cautious":
@@ -112,8 +254,20 @@ async def inputBot():
                 # 20% chance of no action
                 dice = random.randint(1, 5)
                 if dice != 1:
-                    input = random.choice([await north(lightPressTime), await south(lightPressTime), await east(lightPressTime), await west(lightPressTime), await b(pressTime), await mashB(pressTime)])
-                    input()
+                    dice = random.randint(1, 6)
+                    match dice:
+                        case 1:
+                            await north(lightPressTime)
+                        case 2:
+                            await south(lightPressTime)
+                        case 3:
+                            await east(lightPressTime)
+                        case 4:
+                            await west(lightPressTime)
+                        case 5:
+                            await b(pressTime)
+                        case 6:
+                            await mashB(pressTime)
 
             # sonic snack controls
             elif chatPlays.currentSnack == "sonic":
@@ -124,8 +278,30 @@ async def inputBot():
                 # 10% chance of no action
                 dice = random.randint(1, 10)
                 if dice != 1:
-                    input = random.choice([await north(lightPressTime), await south(lightPressTime), await east(lightPressTime), await west(lightPressTime), await mashA(pressTime), await mashB(pressTime), await wander(4, holdTime), await upWander(holdTime), await downWander(holdTime), await leftWander(holdTime), await rightWander(holdTime)])
-                    input()
+                    dice = random.randint(1, 6)
+                    match dice:
+                        case 1:
+                            await north(lightPressTime)
+                        case 2:
+                            await south(lightPressTime)
+                        case 3:
+                            await east(lightPressTime)
+                        case 4:
+                            await west(lightPressTime)
+                        case 5:
+                            await mashA(pressTime)
+                        case 6:
+                            await mashB(pressTime)
+                        case 7:
+                            await wander(4, holdTime)
+                        case 8:
+                            await upWander(holdTime)
+                        case 9:
+                            await downWander(holdTime)
+                        case 10:
+                            await leftWander(holdTime)
+                        case 11:
+                            await rightWander(holdTime)
 
 # chat controls
 async def controller(data):
@@ -175,13 +351,69 @@ async def controller(data):
 
         # making input
         if dice == 1:
-            message = data["message"].lower()
+            message = data.lower()
+            dice = random.randint(1, 40)
 
             # 2.5% chance of random input
-            dice = random.randint(1, 40)
-            if dice == 1:
-                input = random.choice([await up(pressTime), await down(pressTime), await left(pressTime), await right(pressTime), await holdUp(holdTime), await holdDown(holdTime), await holdLeft(holdTime), await holdRight(holdTime), await a(pressTime), await holdA(holdTime), await mashA(pressTime), await b(pressTime), await holdB(), await mashB(pressTime), await x(pressTime), await y(pressTime), await select(pressTime), await start(pressTime), await stop(), await wander(4, holdTime), await north(lightPressTime), await south(lightPressTime), await west(lightPressTime), await east(lightPressTime), await upWander(holdTime), await downWander(holdTime), await leftWander(holdTime), await rightWander(holdTime)])
-                input()
+            if dice == 1 and (message == "a" or "hold a" in message or "mash a" in message or message == "b" or "hold b" in message or "mash b" in message or message == "x" or message == "y" or "select" in message or "start" in message or "up wander" in message or "down wander" in message or "left wander" in message or "right wander" in message or "wander" in message or "hold up" in message or "hold down" in message or "hold left" in message or "hold right" in message or "north" in message or "south" in message or "west" in message or "east" in message or "up" in message or "down" in message or "left" in message or "right" in message or "stop" in message or landmines[0] in message or landmines[1] in message or landmines[2] in message or landmines[3] in message or landmines[4] in message):
+                dice = random.randint(1, 28)
+                match dice:
+                    case 1:
+                        await up(pressTime)
+                    case 2:
+                        await down(pressTime)
+                    case 3:
+                        await left(pressTime)
+                    case 4:
+                        await right(pressTime)
+                    case 5:
+                        await holdUp(holdTime)
+                    case 6:
+                        await holdDown(holdTime)
+                    case 7:
+                        await holdLeft(holdTime)
+                    case 8:
+                        await holdRight(holdTime)
+                    case 9:
+                        await a(pressTime)
+                    case 10:
+                        await holdA(holdTime)
+                    case 11:
+                        await mashA(pressTime)
+                    case 12:
+                        await b(pressTime)
+                    case 13:
+                        await holdB()
+                    case 14:
+                        await mashB(pressTime)
+                    case 15:
+                        await x(pressTime)
+                    case 16:
+                        await y(pressTime)
+                    case 17:
+                        await select(pressTime)
+                    case 18:
+                        await start(pressTime)
+                    case 19:
+                        await stop()
+                    case 20:
+                        await wander(4, holdTime)
+                    case 21:
+                        await north(lightPressTime)
+                    case 22:
+                        await south(lightPressTime)
+                    case 23:
+                        await west(lightPressTime)
+                    case 24:
+                        await east(lightPressTime)
+                    case 25:
+                        await upWander(holdTime)
+                    case 26:
+                        await downWander(holdTime)
+                    case 27:
+                        await leftWander(holdTime)
+                    case 28:
+                        await rightWander(holdTime)
 
             # 2.5% chance of opposite input
             elif dice == 2:
