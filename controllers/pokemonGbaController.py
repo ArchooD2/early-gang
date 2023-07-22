@@ -302,6 +302,8 @@ async def inputBot():
                             await leftWander(holdTime)
                         case 11:
                             await rightWander(holdTime)
+        else:
+            await asyncio.sleep(5)
 
 # chat controls
 async def controller(data):

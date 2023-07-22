@@ -319,6 +319,9 @@ async def inputBot():
                             await pokemonGbaController.leftWander(holdTime)
                         case 11:
                             await pokemonGbaController.rightWander(holdTime)
+        else:
+            await asyncio.sleep(5)
+
 # chat controls
 async def controller(message):
     # makes sure chat is playing
