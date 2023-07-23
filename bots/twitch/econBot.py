@@ -22,6 +22,13 @@ class Bot(commands.Bot):
     def __init__(self):
         super().__init__(token = accessToken, prefix = "!", initial_channels = [yourChannelName])
 
+    # makes the bot shut the hell up about commands not existing
+    async def event_command_error(self, ctx, error):
+        if isinstance(error, commands.CommandNotFound):
+            pass
+        else:
+            print(error)
+
     # starts updating database
     async def event_ready(self):
         await self.updateWatchTime()
@@ -521,7 +528,7 @@ class Bot(commands.Bot):
                                 print("started remod thread")
                                 asyncio.create_task(self.remod(finalId, duration))
 
-    # disables input bot for 10 to 30 minutes
+    # disables input bot for 20 to 60 minutes
     @commands.command()
     async def shootSnack(self, ctx: commands.Context):
 
@@ -691,7 +698,9 @@ class Bot(commands.Bot):
 
     # thread to wait to restart input bot
     async def snackWait(self):
+        print("starting snack wait: " + datetime.now().strftime('%H:%M:%S'))
         await asyncio.sleep(random.randint(1200, 3600))
+        print("ending snack wait: " + datetime.now().strftime('%H:%M:%S'))
         chatPlays.snackShot = False
         chatPlays.snackHealed = False
         await updateSnatus()

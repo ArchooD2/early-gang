@@ -44,6 +44,13 @@ class Bot(commands.Bot):
     def __init__(self):
         super().__init__(token = accessToken, prefix="!", initial_channels = [yourChannelName])
 
+    # makes the bot shut the hell up about commands not existing
+    async def event_command_error(self, ctx, error):
+        if isinstance(error, commands.CommandNotFound):
+            pass
+        else:
+            print(error)
+
     # when someone sends a message in chat
     async def event_message(self, message):
 
