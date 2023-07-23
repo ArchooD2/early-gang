@@ -21,7 +21,7 @@ bot = discord.Client(intents = intents)
 @bot.event
 async def on_message_delete(message):
 
-    if message.author.id == 1065034277756080158:
+    if message.author.id == 959715465914105856:
 
         # send message content if any
         if len(message.content) > 0:
@@ -39,7 +39,5 @@ async def on_message_delete(message):
 # sends message edit content
 @bot.event
 async def on_message_edit(before, after):
-    print(before.content, after.content, before.author.id)
-    if before.author.id == 1065034277756080158 and before.content != after.content:
-        print(before.content, after.content)
+    if before.author.id == 959715465914105856 and before.content != after.content:
         await before.channel.send("edited \"" + before.content + "\" to \"" + after.content + "\"")
