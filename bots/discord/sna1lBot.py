@@ -40,7 +40,7 @@ async def on_ready():
     while True:
 
         # waiting two to five days
-        await asyncio.sleep(random.randint(172800, 432000))
+        await asyncio.sleep(random.randint(14400, 432000))
 
         strikes = 1
         waitingForAnswer = True
