@@ -545,7 +545,7 @@ class Bot(commands.Bot):
                                 print("started remod thread")
                                 asyncio.create_task(self.remod(finalId, duration))
 
-    # disables input bot for 20 to 60 minutes
+    # disables input bot for 35 to 95 minutes
     @commands.command()
     async def shootSnack(self, ctx: commands.Context):
 
@@ -715,9 +715,7 @@ class Bot(commands.Bot):
 
     # thread to wait to restart input bot
     async def snackWait(self):
-        print("starting snack wait: " + datetime.now().strftime('%H:%M:%S'))
-        await asyncio.sleep(random.randint(1200, 3600))
-        print("ending snack wait: " + datetime.now().strftime('%H:%M:%S'))
+        await asyncio.sleep(random.randint(2100, 5700))
         chatPlays.snackShot = False
         chatPlays.snackHealed = False
         await updateSnatus()
