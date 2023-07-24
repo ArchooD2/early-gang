@@ -83,10 +83,20 @@ class Bot(commands.Bot):
     @commands.command()
     async def watchtime(self, ctx: commands.Context):
 
-        # finding user id in database
-        async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-            async with db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
-                result = await cursor.fetchone()
+        # checking own points
+        if ctx.message.content == "!watchtime" or ctx.message.content == "!watchtime ":
+
+            async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
+                async with db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
+                    result = await cursor.fetchone()
+            # letting whitelisters check others' points
+
+        else:
+            if ctx.author.name in whiteListers:
+                ctx.message.content = ctx.message.content.replace("!bp ", "")
+                async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
+                    async with db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.message.content),)) as cursor:
+                        result = await cursor.fetchone()
 
         # calculating output
         if result:
@@ -119,7 +129,10 @@ class Bot(commands.Bot):
             if duration == "":
                 duration += str(seconds) + " seconds"
 
-            await ctx.send("[bot] " + ctx.author.name + " has watched " + yourChannelName + " for " + duration)
+            if ctx.message.content == "!bp" or ctx.message.content != "!bp ":
+                await ctx.send("[bot] " + ctx.author.name + " has watched " + yourChannelName + " for " + duration)
+            else:
+                await ctx.send("[bot] " + ctx.message.content + " has watched " + yourChannelName + " for " + duration)
 
     # tells the user how many points they have
     @commands.command()
@@ -266,11 +279,15 @@ class Bot(commands.Bot):
                             taker = await cursor.fetchone()
 
                             # check if giver has enough points
-                            if giver[2] < int(ctx.message.content[1]):
+                            if giver[2] <= int(ctx.message.content[1]):
                                 await ctx.send("[bot] not enough basement pesos")
+
+                            elif str((ctx.author.name).lower()) == str((ctx.message.content[0]).lower()):
+                                await ctx.send("[bot] nice try")
 
                             # transfer money
                             elif giver and taker:
+                                print(giver, taker)
                                 await cursor.execute("UPDATE economy SET points=? WHERE id=?", ((giver[2] - int(ctx.message.content[1])), await getBroadcasterId(ctx.author.name)))
                                 await cursor.execute("UPDATE economy SET points=? WHERE id=?", ((taker[2] + int(ctx.message.content[1])), await getBroadcasterId(ctx.message.content[0])))
                                 await db.commit()
