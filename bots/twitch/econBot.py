@@ -335,7 +335,7 @@ class Bot(commands.Bot):
     # lists commands available for purchase
     @commands.command()
     async def bpShop(self, ctx: commands.Context):
-        await ctx.send("[bot] !shoot (1000), !shootSnack (500), !swapSnack (300), !emp (300), !healSnack (250)")
+        await ctx.send("[bot] !shoot (1000), !shootSnack (800), !swapSnack (150), !emp (150), !healSnack (500)")
 
     # times out user
     @commands.command()
@@ -557,11 +557,11 @@ class Bot(commands.Bot):
                 result = await cursor.fetchone()
 
                 # check if user has the money
-                if result[2] < 500 and ctx.author.name not in whiteListers:
+                if result[2] < 800 and ctx.author.name not in whiteListers:
                     await ctx.send("[bot] not enough basement pesos")
                 else:
                     if ctx.author.name not in whiteListers:
-                        await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 500), await getBroadcasterId(ctx.author.name)))
+                        await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 800), await getBroadcasterId(ctx.author.name)))
                         await db.commit()
 
                     # getting random action and item
@@ -603,11 +603,11 @@ class Bot(commands.Bot):
                 result = await cursor.fetchone()
 
                 # check if user has the money
-                if result[2] < 250 and ctx.author.name not in whiteListers:
+                if result[2] < 500 and ctx.author.name not in whiteListers:
                     await ctx.send("[bot] not enough basement pesos")
                 else:
                     if ctx.author.name not in whiteListers:
-                        await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 250), await getBroadcasterId(ctx.author.name)))
+                        await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 500), await getBroadcasterId(ctx.author.name)))
                         await db.commit()
 
                     # getting random item
@@ -641,11 +641,11 @@ class Bot(commands.Bot):
                 result = await cursor.fetchone()
 
                 # check if the user has enough money
-                if result[2] < 300 and ctx.author.name not in whiteListers:
+                if result[2] < 150 and ctx.author.name not in whiteListers:
                     await ctx.send("[bot] not enough basement pesos")
                 else:
                     if ctx.author.name not in whiteListers:
-                        await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 300), await getBroadcasterId(ctx.author.name)))
+                        await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 150), await getBroadcasterId(ctx.author.name)))
                         await db.commit()
 
                     chatPlays.currentSnack = snacks[random.randint(0, len(snacks) - 1)]
@@ -664,11 +664,11 @@ class Bot(commands.Bot):
                 result = await cursor.fetchone()
 
                 # check if user has the money
-                if result[2] < 300 and ctx.author.name not in whiteListers:
+                if result[2] < 150 and ctx.author.name not in whiteListers:
                     await ctx.send("[bot] not enough basement pesos")
                 else:
                     if ctx.author.name not in whiteListers:
-                        await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 300), await getBroadcasterId(ctx.author.name)))
+                        await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 150), await getBroadcasterId(ctx.author.name)))
                         await db.commit()
 
                     chatPlays.landminesActive = False
