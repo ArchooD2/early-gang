@@ -36,7 +36,7 @@ async def idleBot():
             dice = random.randint(1, 4)
             if dice == 1:
                 if dice == 1:
-                    dice = random.randint(1, 8)
+                    dice = random.randint(1, 6)
                     match dice:
                         case 1:
                             await pokemonGbaController.a(pressTime)
@@ -47,12 +47,8 @@ async def idleBot():
                         case 4:
                             await y(pressTime)
                         case 5:
-                            await pokemonGbaController.select(pressTime)
-                        case 6:
-                            await pokemonGbaController.start(pressTime)
-                        case 7:
                             await l(pressTime)
-                        case 8:
+                        case 6:
                             await r(pressTime)
 
             # 75% chance of directionals
@@ -91,7 +87,7 @@ async def inputBot():
                 # 5% chance of no action
                 dice = random.randint(1, 100)
                 if dice < 96:
-                    dice = random.randint(1, 19)
+                    dice = random.randint(1, 17)
                     match dice:
                         case 1:
                             await pokemonGbaController.up(pressTime)
@@ -126,10 +122,6 @@ async def inputBot():
                         case 16:
                             await r(pressTime)
                         case 17:
-                            await pokemonGbaController.select(pressTime)
-                        case 18:
-                            await pokemonGbaController.start(pressTime)
-                        case 19:
                             await pokemonGbaController.wander(2, holdTime)
 
             # chris snack controls
@@ -141,7 +133,7 @@ async def inputBot():
                 # 33% chance of no action
                 dice = random.randint(1, 3)
                 if dice != 1:
-                    dice = random.randint(1, 19)
+                    dice = random.randint(1, 17)
                     match dice:
                         case 1:
                             await pokemonGbaController.up(pressTime)
@@ -176,10 +168,6 @@ async def inputBot():
                         case 16:
                             await r(pressTime)
                         case 17:
-                            await pokemonGbaController.select(pressTime)
-                        case 18:
-                            await pokemonGbaController.start(pressTime)
-                        case 19:
                             await pokemonGbaController.wander(2, holdTime)
                         
             # burst snack controls
@@ -192,7 +180,7 @@ async def inputBot():
                 dice = random.randint(1, 10)
                 if dice != 1:
                     for i in range(5):
-                        dice = random.randint(1, 19)
+                        dice = random.randint(1, 17)
                         match dice:
                             case 1:
                                 await pokemonGbaController.up(pressTime)
@@ -227,10 +215,6 @@ async def inputBot():
                             case 16:
                                 await r(pressTime)
                             case 17:
-                                await pokemonGbaController.select(pressTime)
-                            case 18:
-                                await pokemonGbaController.start(pressTime)
-                            case 19:
                                 await pokemonGbaController.wander(2, holdTime)
 
             # silly snack controls
