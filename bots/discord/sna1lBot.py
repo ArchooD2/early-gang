@@ -11,6 +11,7 @@ import aiofile
 config = configparser.ConfigParser()
 config.read(os.path.abspath((os.path.join(directory, "config.ini"))))
 sna1lBotToken = config.get("discord", "sna1l bot token")
+bot = discord.Client(intents = discord.Intents.all())
 
 # setting the bot up
 intents = discord.Intents.default()
