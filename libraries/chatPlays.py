@@ -7,7 +7,7 @@ import pynput
 import aiofile
 
 # change controller here
-from controllers.pokemonDsController import *
+from controllers.dsController import *
 
 # setting up variables
 connection = None
