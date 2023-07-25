@@ -1,7 +1,7 @@
 
 # imports
 from bots.twitch import pollBot, commandBot, econBot
-from bots.discord import gwrbullBot, ramcicleBot, sna1lBot, fizzyghostBot, birdmanBot
+from bots.discord import gwrbullBot, ramcicleBot, sna1lBot, fizzyghostBot, birdmanBot, discordCommandBot
 from libraries.charityDonoTTS import *
 from libraries.chatPlays import *
 from libraries.autoStream import *
@@ -60,7 +60,7 @@ async def main():
 
 # run main and all your other background tasks here
 async def setup():
-    await asyncio.gather(connectToObs(), chatPlays.updateSnatus(), pollBot.Bot().start(), commandBot.Bot().start(), econBot.Bot().start(), gwrbullBot.bot.start(gwrbullBot.gwrbullBotToken), ramcicleBot.bot.start(ramcicleBot.ramcicleBotToken), sna1lBot.bot.start(sna1lBot.sna1lBotToken), birdmanBot.bot.start(birdmanBot.birdmanBotToken), fizzyghostBot.bot.start(fizzyghostBot.fizzyghostBotToken), asyncio.create_task(main()))
+    await asyncio.gather(connectToObs(), chatPlays.updateSnatus(), pollBot.Bot().start(), commandBot.Bot().start(), econBot.Bot().start(), discordCommandBot.bot.start(discordCommandBot.commandBotToken), gwrbullBot.bot.start(gwrbullBot.gwrbullBotToken), ramcicleBot.bot.start(ramcicleBot.ramcicleBotToken), sna1lBot.bot.start(sna1lBot.sna1lBotToken), birdmanBot.bot.start(birdmanBot.birdmanBotToken), fizzyghostBot.bot.start(fizzyghostBot.fizzyghostBotToken), asyncio.create_task(main()))
 
 # don't touch this
 try:
