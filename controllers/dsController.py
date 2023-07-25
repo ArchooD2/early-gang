@@ -7,10 +7,10 @@ from libraries.autoStream import *
 import aiohttp
 
 # setting up variables
-pressTime = (random.randint(5, 10) / 10)
+pressTime = (random.randint(5, 12) / 10)
 lightPressTime = (random.randint(1, 3) / 100)
 holdTime = random.randint(5, 10)
-slightlyDifferentHoldTimeForWhateverFuckingReason = random.randint(1, 3)
+slightlyDifferentHoldTimeForWhateverFuckingReason = (random.randint(9, 15)/ 10)
 
 # reading config
 config = configparser.ConfigParser()
