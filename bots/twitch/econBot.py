@@ -5,7 +5,6 @@
 
 # imports
 from datetime import datetime, timezone
-
 import aiosqlite
 from twitchio.ext import commands
 from libraries.chatPlays import *
@@ -15,6 +14,7 @@ databaseLock = asyncio.Lock()
 chatters = []
 live = False
 firstRedeemed = True
+activeCodes = []
 
 class Bot(commands.Bot):
 
@@ -35,7 +35,6 @@ class Bot(commands.Bot):
 
     # whenever a user joins write their id and entry time into an array and add their id to the database if not there
     async def event_join(self, channel, user):
-
         global chatters
 
         # adds chatter id, watch time start, and uptime start
@@ -45,12 +44,12 @@ class Bot(commands.Bot):
         # reading database
         async with databaseLock:
             async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                cursor = await db.execute("SELECT id FROM economy WHERE id=?", (await getBroadcasterId(user.name),))
+                cursor = await db.execute("SELECT twitchId FROM economy WHERE twitchId=?", (await getBroadcasterId(user.name),))
                 result = await cursor.fetchone()
 
                 # adding id if not in database
                 if result is None:
-                    await db.execute("INSERT INTO economy (id, watchtime, points) VALUES (?, ?, ?)", (await getBroadcasterId(user.name), 0, 0))
+                    await db.execute("INSERT INTO economy (twitchId, watchtime, points, discordId) VALUES (?, ?, ?, ?)", (await getBroadcasterId(user.name), 0, 0, None))
                     await db.commit()
 
     # whenever a user leaves add their remaining time to the csv and remove them from the array
@@ -71,13 +70,43 @@ class Bot(commands.Bot):
             async with databaseLock:
                 async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
                     cursor = await db.cursor()
-                    await cursor.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(user.name),))
+                    await cursor.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(user.name),))
                     result = await cursor.fetchone()
-                    await cursor.execute("UPDATE economy SET watchtime=? WHERE id=?", ((float(result[1]) + (time.time() - chatter[1])), await getBroadcasterId(user.name)))
+                    await cursor.execute("UPDATE economy SET watchtime=? WHERE twitchId=?", ((float(result[1]) + (time.time() - chatter[1])), await getBroadcasterId(user.name)))
                     await db.commit()
 
             # removing chatter from active chatter list
             chatters.remove(chatter)
+
+    @commands.command()
+    async def link(self, ctx: commands.Context):
+        if ctx.message.content == "!link" or ctx.message.content == "!link ":
+            await ctx.send("[bot] please include your code you got from discord")
+
+        else:
+            ctx.message.content = ctx.message.content.replace("!link ", "")
+
+            # checking what ids have a code rn
+            codeFound = False
+            for codes in activeCodes:
+
+                # if id found
+                if str(codes[2]) == ctx.message.content:
+                    codeFound = True
+
+                    # updating database
+                    async with databaseLock:
+                        async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
+                            await db.execute("UPDATE economy SET discordId=? WHERE twitchId=?", (codes[0], await getBroadcasterId(ctx.author.name)))
+                            await db.commit()
+
+                    await ctx.send("[bot] discord linked, " + codes[1])
+
+                    activeCodes.remove(codes)
+                    break
+
+            if not codeFound:
+                await ctx.send("[bot] double check your code")
 
     # sends a message with the user's watch time formatted as days, hours, minutes, seconds
     @commands.command()
@@ -86,17 +115,21 @@ class Bot(commands.Bot):
         # checking own points
         if ctx.message.content == "!watchtime" or ctx.message.content == "!watchtime ":
 
-            async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                async with db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
-                    result = await cursor.fetchone()
-            # letting whitelisters check others' points
+            async with databaseLock:
+                async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
+                    async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
+                        result = await cursor.fetchone()
 
+     # letting whitelisters check others' points
         else:
             if ctx.author.name in whiteListers:
-                ctx.message.content = ctx.message.content.replace("!bp ", "")
-                async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                    async with db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.message.content),)) as cursor:
-                        result = await cursor.fetchone()
+                ctx.message.content = ctx.message.content.replace("!watchtime ", "")
+                print(ctx.message.content)
+                async with databaseLock:
+                    async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
+                        async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.message.content),)) as cursor:
+                            result = await cursor.fetchone()
+                            print(result)
 
         # calculating output
         if result:
@@ -141,9 +174,10 @@ class Bot(commands.Bot):
         # checking own points
         if ctx.message.content == "!bp" or ctx.message.content == "!bp ":
 
-            async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                async with db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
-                    result = await cursor.fetchone()
+            async with databaseLock:
+                async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
+                    async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
+                        result = await cursor.fetchone()
 
             # sending result if id exists
             if result:
@@ -154,9 +188,10 @@ class Bot(commands.Bot):
             if ctx.author.name in whiteListers:
 
                 ctx.message.content = ctx.message.content.replace("!bp ", "")
-                async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                    async with db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.message.content),)) as cursor:
-                        result = await cursor.fetchone()
+                async with databaseLock:
+                    async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
+                        async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.message.content),)) as cursor:
+                            result = await cursor.fetchone()
 
                         # sending result if id exists
                         if result:
@@ -199,7 +234,7 @@ class Bot(commands.Bot):
             # searching database for id
             async with databaseLock:
                 async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
-                    async with db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
+                    async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
                         result = await cursor.fetchone()
 
                         # updating points
@@ -207,16 +242,16 @@ class Bot(commands.Bot):
 
                             # if first !first, give points
                             if not firstRedeemed:
-                                await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] + points), await getBroadcasterId(ctx.author.name)))
+                                await db.execute("UPDATE economy SET points=? WHERE twitchId=?", ((result[2] + points), await getBroadcasterId(ctx.author.name)))
 
                                 await ctx.send("[bot] " + ctx.author.name + " is first " + ctx.author.name + " gained " + str(points) + " basement pesos")
 
                             # if not first !first, take points
                             else:
                                 if result[2] > 100:
-                                    await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - points), await getBroadcasterId(ctx.author.name)))
+                                    await db.execute("UPDATE economy SET points=? WHERE twitchId=?", ((result[2] - points), await getBroadcasterId(ctx.author.name)))
                                 else:
-                                    await db.execute("UPDATE economy SET points=? WHERE id=?", (0, await getBroadcasterId(ctx.author.name)))
+                                    await db.execute("UPDATE economy SET points=? WHERE twitchId=?", (0, await getBroadcasterId(ctx.author.name)))
                                 await ctx.send("[bot] " + ctx.author.name + " is not first " + ctx.author.name + " lost " + str(points) + " basement pesos")
                             await db.commit()
 
@@ -240,9 +275,9 @@ class Bot(commands.Bot):
                     async with databaseLock:
                         async with aiosqlite.connect( os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
                             cursor = await db.cursor()
-                            await cursor.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.message.content[0]),))
+                            await cursor.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.message.content[0]),))
                             result = await cursor.fetchone()
-                            await cursor.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] + int(ctx.message.content[1])), await getBroadcasterId(ctx.message.content[0])))
+                            await cursor.execute("UPDATE economy SET points=? WHERE twitchId=?", ((result[2] + int(ctx.message.content[1])), await getBroadcasterId(ctx.message.content[0])))
                             await db.commit()
 
                     await ctx.send("[bot] gave " + ctx.message.content[0] + " " + ctx.message.content[1] + " basement pesos")
@@ -272,10 +307,10 @@ class Bot(commands.Bot):
                     async with databaseLock:
                         async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
                             cursor = await db.cursor()
-                            await cursor.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),))
+                            await cursor.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),))
                             giver = await cursor.fetchone()
 
-                            await cursor.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.message.content[0]),))
+                            await cursor.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.message.content[0]),))
                             taker = await cursor.fetchone()
 
                             # check if giver has enough points
@@ -287,9 +322,9 @@ class Bot(commands.Bot):
 
                             # transfer money
                             elif giver and taker:
-                                print(giver, taker)
-                                await cursor.execute("UPDATE economy SET points=? WHERE id=?", ((giver[2] - int(ctx.message.content[1])), await getBroadcasterId(ctx.author.name)))
-                                await cursor.execute("UPDATE economy SET points=? WHERE id=?", ((taker[2] + int(ctx.message.content[1])), await getBroadcasterId(ctx.message.content[0])))
+
+                                await cursor.execute("UPDATE economy SET points=? WHERE twitchId=?", ((giver[2] - int(ctx.message.content[1])), await getBroadcasterId(ctx.author.name)))
+                                await cursor.execute("UPDATE economy SET points=? WHERE twitchId=?", ((taker[2] + int(ctx.message.content[1])), await getBroadcasterId(ctx.message.content[0])))
                                 await db.commit()
 
                                 await ctx.send("[bot] " + ctx.author.name + " gave " + ctx.message.content[0] + " " +ctx.message.content[1] + " basement pesos")
@@ -323,12 +358,12 @@ class Bot(commands.Bot):
                 elif await getBroadcasterId(ctx.message.content[0]):
                     async with databaseLock:
                         async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                            async with db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.message.content[0]),)) as cursor:
+                            async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.message.content[0]),)) as cursor:
                                 result = await cursor.fetchone()
 
                                 # if user in database
                                 if result:
-                                    await db.execute("UPDATE economy SET points=? WHERE id=?", (result[2] - int(ctx.message.content[1]), await getBroadcasterId(ctx.message.content[0])))
+                                    await db.execute("UPDATE economy SET points=? WHERE twitchId=?", (result[2] - int(ctx.message.content[1]), await getBroadcasterId(ctx.message.content[0])))
                                     await db.commit()
                                     await ctx.send("[bot] took from " + ctx.message.content[0] + " " + ctx.message.content[1] + " basement pesos")
 
@@ -366,7 +401,7 @@ class Bot(commands.Bot):
             async with databaseLock:
                 # finding user id in database
                 async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
-                    cursor = await db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),))
+                    cursor = await db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),))
                     result = await cursor.fetchone()
 
                     # check if user has the money
@@ -374,7 +409,7 @@ class Bot(commands.Bot):
                         await ctx.send("[bot] not enough basement pesos")
                     else:
                         if ctx.author.name not in whiteListers:
-                            await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 1000), await getBroadcasterId(ctx.author.name)))
+                            await db.execute("UPDATE economy SET points=? WHERE twitchId=?", ((result[2] - 1000), await getBroadcasterId(ctx.author.name)))
                             await db.commit()
 
                         connected = False
@@ -430,7 +465,7 @@ class Bot(commands.Bot):
             async with databaseLock:
                 # finding user id in database
                 async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
-                    cursor = await db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),))
+                    cursor = await db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),))
                     result = await cursor.fetchone()
 
                     # check if the user has the money
@@ -438,7 +473,7 @@ class Bot(commands.Bot):
                         await ctx.send("[bot] not enough basement pesos")
                     else:
                         if ctx.author.name not in whiteListers:
-                            await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 1000), await getBroadcasterId(ctx.author.name)))
+                            await db.execute("UPDATE economy SET points=? WHERE twitchId=?", ((result[2] - 1000), await getBroadcasterId(ctx.author.name)))
                             await db.commit()
 
                         dice = random.randint(1, 100)
@@ -537,12 +572,10 @@ class Bot(commands.Bot):
                                                         connected = True
                                                 else:
                                                     await asyncio.sleep(5)
-                                    except Exception as e:
-                                        print(e)
+                                    except:
                                         await asyncio.sleep(5)
 
                             if finalId in modIds:
-                                print("started remod thread")
                                 asyncio.create_task(self.remod(finalId, duration))
 
     # disables input bot for 35 to 95 minutes
@@ -553,7 +586,7 @@ class Bot(commands.Bot):
 
             # finding user id in database
             async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                cursor = await db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),))
+                cursor = await db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),))
                 result = await cursor.fetchone()
 
                 # check if user has the money
@@ -561,7 +594,7 @@ class Bot(commands.Bot):
                     await ctx.send("[bot] not enough basement pesos")
                 else:
                     if ctx.author.name not in whiteListers:
-                        await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 800), await getBroadcasterId(ctx.author.name)))
+                        await db.execute("UPDATE economy SET points=? WHERE twitchId=?", ((result[2] - 800), await getBroadcasterId(ctx.author.name)))
                         await db.commit()
 
                     # getting random action and item
@@ -597,28 +630,28 @@ class Bot(commands.Bot):
         async with databaseLock:
 
             # finding user id in database
-            db_path = os.path.abspath((os.path.join(directory, "chatData.db")))
-            async with aiosqlite.connect(db_path) as db:
-                cursor = await db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),))
-                result = await cursor.fetchone()
+            async with databaseLock:
+                async with aiosqlite.connect( os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
+                    cursor = await db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),))
+                    result = await cursor.fetchone()
 
-                # check if user has the money
-                if result[2] < 500 and ctx.author.name not in whiteListers:
-                    await ctx.send("[bot] not enough basement pesos")
-                else:
-                    if ctx.author.name not in whiteListers:
-                        await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 500), await getBroadcasterId(ctx.author.name)))
-                        await db.commit()
-
-                    # getting random item
-                    async with db.execute("SELECT item FROM items ORDER BY RANDOM() LIMIT 1") as cursor:
-                        item = await cursor.fetchone()
-
-                    item = str(item).replace("(", "").replace(")", "").replace(",", "")
-                    if item[0] == "\'":
-                        item = item.replace("\'", "")
+                    # check if user has the money
+                    if result[2] < 500 and ctx.author.name not in whiteListers:
+                        await ctx.send("[bot] not enough basement pesos")
                     else:
-                        item = item.replace("\"", "")
+                        if ctx.author.name not in whiteListers:
+                            await db.execute("UPDATE economy SET points=? WHERE twitchId=?", ((result[2] - 500), await getBroadcasterId(ctx.author.name)))
+                            await db.commit()
+
+                        # getting random item
+                        async with db.execute("SELECT item FROM items ORDER BY RANDOM() LIMIT 1") as cursor:
+                            item = await cursor.fetchone()
+
+                        item = str(item).replace("(", "").replace(")", "").replace(",", "")
+                        if item[0] == "\'":
+                            item = item.replace("\'", "")
+                        else:
+                            item = item.replace("\"", "")
 
                     # enabling bot
                     dice = random.randint(1, 100)
@@ -636,22 +669,23 @@ class Bot(commands.Bot):
         async with databaseLock:
 
             # finding user id in database
-            async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                cursor = await db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),))
-                result = await cursor.fetchone()
+            async with databaseLock:
+                async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
+                    cursor = await db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),))
+                    result = await cursor.fetchone()
 
-                # check if the user has enough money
-                if result[2] < 150 and ctx.author.name not in whiteListers:
-                    await ctx.send("[bot] not enough basement pesos")
-                else:
-                    if ctx.author.name not in whiteListers:
-                        await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 150), await getBroadcasterId(ctx.author.name)))
-                        await db.commit()
+                    # check if the user has enough money
+                    if result[2] < 150 and ctx.author.name not in whiteListers:
+                        await ctx.send("[bot] not enough basement pesos")
+                    else:
+                        if ctx.author.name not in whiteListers:
+                            await db.execute("UPDATE economy SET points=? WHERE twitchId=?", ((result[2] - 150), await getBroadcasterId(ctx.author.name)))
+                            await db.commit()
 
-                    chatPlays.currentSnack = snacks[random.randint(0, len(snacks) - 1)]
-                    await ctx.send("[bot] " + chatPlays.currentSnack + " snack was swapped in")
-                    if not chatPlays.idleBotStatus:
-                        await updateSnatus()
+                        chatPlays.currentSnack = snacks[random.randint(0, len(snacks) - 1)]
+                        await ctx.send("[bot] " + chatPlays.currentSnack + " snack was swapped in")
+                        if not chatPlays.idleBotStatus:
+                            await updateSnatus()
 
     # disables landmines for ten to fifteen minutes
     @commands.command()
@@ -659,21 +693,22 @@ class Bot(commands.Bot):
         async with databaseLock:
 
             # finding user id in database
-            async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                cursor = await db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),))
-                result = await cursor.fetchone()
+            async with databaseLock:
+                async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
+                    cursor = await db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),))
+                    result = await cursor.fetchone()
 
-                # check if user has the money
-                if result[2] < 150 and ctx.author.name not in whiteListers:
-                    await ctx.send("[bot] not enough basement pesos")
-                else:
-                    if ctx.author.name not in whiteListers:
-                        await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 150), await getBroadcasterId(ctx.author.name)))
-                        await db.commit()
+                    # check if user has the money
+                    if result[2] < 150 and ctx.author.name not in whiteListers:
+                        await ctx.send("[bot] not enough basement pesos")
+                    else:
+                        if ctx.author.name not in whiteListers:
+                            await db.execute("UPDATE economy SET points=? WHERE twitchId=?", ((result[2] - 150), await getBroadcasterId(ctx.author.name)))
+                            await db.commit()
 
-                    chatPlays.landminesActive = False
-                    await ctx.send("[bot] " + ctx.author.name + " deactivated landmines")
-                    asyncio.create_task(self.empWait())
+                        chatPlays.landminesActive = False
+                        await ctx.send("[bot] " + ctx.author.name + " deactivated landmines")
+                        asyncio.create_task(self.empWait())
 
     # as soon as bot is logged in constantly check the array and update watch time and points
     async def updateWatchTime(self):
@@ -696,20 +731,21 @@ class Bot(commands.Bot):
                 # update database for all users in chat
                 async with databaseLock:
                     for chatter in chatters:
-                        async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
-                            async with db.execute("SELECT * FROM economy WHERE id=?", (chatter[0],)) as cursor:
-                                result = await cursor.fetchone()
+                        async with databaseLock:
+                            async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
+                                async with db.execute("SELECT * FROM economy WHERE twitchId=?", (chatter[0],)) as cursor:
+                                    result = await cursor.fetchone()
 
-                                # setting points and watchtime
-                                if result:
-                                    if (time.time() - chatter[2]) >= 300:
-                                        await db.execute("UPDATE economy SET points=? WHERE id=?", (result[2] + 10, chatter[0]))
-                                        chatter[2] = time.time()
+                                    # setting points and watchtime
+                                    if result:
+                                        if (time.time() - chatter[2]) >= 300:
+                                            await db.execute("UPDATE economy SET points=? WHERE twitchId=?", (result[2] + 10, chatter[0]))
+                                            chatter[2] = time.time()
 
-                                    await db.execute("UPDATE economy SET watchtime=? WHERE id=?", (float(result[1]) + (time.time() - chatter[1]), chatter[0]))
-                                    chatter[1] = time.time()
+                                        await db.execute("UPDATE economy SET watchtime=? WHERE twitchId=?", (float(result[1]) + (time.time() - chatter[1]), chatter[0]))
+                                        chatter[1] = time.time()
 
-                                    await db.commit()
+                                        await db.commit()
             else:
                 live = False
 
