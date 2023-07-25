@@ -7,9 +7,10 @@ from libraries.autoStream import *
 import aiohttp
 
 # setting up variables
-pressTime = (random.randint(1, 3) / 10)
+pressTime = (random.randint(5, 10) / 10)
 lightPressTime = (random.randint(1, 3) / 100)
 holdTime = random.randint(5, 10)
+slightlyDifferentHoldTimeForWhateverFuckingReason = random.randint(1, 3)
 
 # reading config
 config = configparser.ConfigParser()
@@ -370,8 +371,8 @@ async def controller(message):
             dice = random.randint(1, 40)
 
             # 2.5% chance of random input
-            if dice == 1 and (message == "a" or "hold a" in message or "mash a" in message or message == "b" or "hold b" in message or "mash b" in message or message == "x" or message == "y" or "select" in message or "start" in message or message == "l" or message == "r" or "up wander" in message or "down wander" in message or "left wander" in message or "right wander" in message or "wander" in message or "hold up" in message or "hold down" in message or "hold left" in message or "hold right" in message or "north" in message or "south" in message or "west" in message or "east" in message or "up" in message or "down" in message or "left" in message or "right" in message or "stop" in message or landmines[0] in message or landmines[1] in message or landmines[2] in message or landmines[3] in message or landmines[4] in message):
-                dice = random.randint(1, 30)
+            if dice == 1 and (message == "a" or "shoot" in message or "left+" in message or "right+" in message or "down+" in message or "up+" in message or "hold a" in message or "mash a" in message or message == "b" or "hold b" in message or "mash b" in message or message == "x" or message == "y" or "select" in message or "start" in message or message == "l" or message == "r" or "up wander" in message or "down wander" in message or "left wander" in message or "right wander" in message or "wander" in message or "hold up" in message or "hold down" in message or "hold left" in message or "hold right" in message or "north" in message or "south" in message or "west" in message or "east" in message or "up" in message or "down" in message or "left" in message or "right" in message or "stop" in message or landmines[0] in message or landmines[1] in message or landmines[2] in message or landmines[3] in message or landmines[4] in message):
+                dice = random.randint(1, 34)
                 match dice:
                     case 1:
                         await pokemonGbaController.up(pressTime)
@@ -433,10 +434,17 @@ async def controller(message):
                         await pokemonGbaController.leftWander(holdTime)
                     case 30:
                         await pokemonGbaController.rightWander(holdTime)
-
+                    case 31:
+                        await leftPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
+                    case 32:
+                        await rightPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
+                    case 33:
+                        await upPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
+                    case 34:
+                        await downPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
             # 2.5% chance of opposite input
             elif dice == 2:
-                if message == "a":
+                if message == "a" or "shoot" in message:
                     await pokemonGbaController.b(pressTime)
                 elif "hold a" in message:
                     await pokemonGbaController.holdB()
@@ -486,6 +494,14 @@ async def controller(message):
                     await pokemonGbaController.east(lightPressTime)
                 elif "east" in message:
                     await pokemonGbaController.west(lightPressTime)
+                elif "up+" in message:
+                    await downPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
+                elif "down+" in message:
+                    await upPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
+                elif "left+" in message:
+                    await rightPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
+                elif "right+" in message:
+                    await leftPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
                 elif "up" in message:
                     await pokemonGbaController.down(pressTime)
                 elif "down" in message:
@@ -505,7 +521,7 @@ async def controller(message):
 
             # 95% chance of correct inputs
             else:
-                if message == "a":
+                if message == "a" or "shoot" in message:
                     await pokemonGbaController. a(pressTime)
                 elif "hold a" in message:
                     await pokemonGbaController.holdA(holdTime)
@@ -555,6 +571,14 @@ async def controller(message):
                     await pokemonGbaController.west(lightPressTime)
                 elif "east" in message:
                     await pokemonGbaController.east(lightPressTime)
+                elif "up+" in message:
+                    await upPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
+                elif "down+" in message:
+                    await downPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
+                elif "left+" in message:
+                    await leftPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
+                elif "right+" in message:
+                    await rightPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
                 elif "up" in message:
                     await pokemonGbaController.up(pressTime)
                 elif "down" in message:
@@ -581,3 +605,15 @@ async def l(pressTime):
 
 async def r(pressTime):
     await chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("E"), pressTime)
+
+async def leftPlus(holdTime):
+    await chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), holdTime)
+
+async def rightPlus(holdTime):
+    await chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), holdTime)
+
+async def upPlus(holdTime):
+    await chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), holdTime)
+
+async def downPlus(holdTime):
+    await chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), holdTime)
