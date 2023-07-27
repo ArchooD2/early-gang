@@ -145,9 +145,16 @@ async def tts():
                 ids.append([x.get("id"), x.get("name")])
 
             for id in ids:
-                donation_response = await session.get("https://v5api.tiltify.com/api/public/campaigns/" + str(id[0]) + "/donations", headers = {"Authorization": "Bearer " + requests.post("https://v5api.tiltify.com/oauth/token", data={"client_id": clientID, "client_secret": clientSecret, "grant_type": "refresh_token", "refresh_token": refreshToken}).json().get("access_token")})
-                donationData = await donation_response.json()
-                donationData = donationData.get("data")
+
+                connected = False
+
+                while not connected:
+                    try:
+                        donation_response = await session.get("https://v5api.tiltify.com/api/public/campaigns/" + str(id[0]) + "/donations", headers = {"Authorization": "Bearer " + requests.post("https://v5api.tiltify.com/oauth/token", data={"client_id": clientID, "client_secret": clientSecret, "grant_type": "refresh_token", "refresh_token": refreshToken}).json().get("access_token")})
+                        donationData = await donation_response.json()
+                        donationData = donationData.get("data")
+                    except:
+                        await asyncio.sleep(5)
 
                 if donationData != [] and donationData not in lastDonation:
                     lastDonation += [donationData]
