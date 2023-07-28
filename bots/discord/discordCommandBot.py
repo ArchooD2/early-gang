@@ -1,25 +1,25 @@
 # basic bot to host all the commands needed for the discord server
-# TODO reminders
 # TODO cah
 # TODO role menus
+import datetime
 
 # imports
-import asyncio
-import random
-
 import discord
+from discord.ext import commands
+import random
 from libraries.autoStream import *
+
 
 # setting the bot up
 config = configparser.ConfigParser()
 config.read(os.path.abspath((os.path.join(directory, "config.ini"))))
 commandBotToken = config.get("discord", "command bot token")
-bot = discord.Client(command_prefix = "!", intents = discord.Intents.all())
+bot = commands.Bot(command_prefix = "!", intents = discord.Intents.all())
 
 # it's yagging time
 @bot.event
 async def on_ready():
-
+    await bot.tree.sync()
     while True:
         await asyncio.sleep(random.randint(43200, 86400))
         await bot.get_channel(1125230641563312238).send("it's yagging time")
@@ -49,3 +49,29 @@ async def voidWait(user, reaction):
     await asyncio.sleep(random.randint(120, 10800))
     await user.remove_roles(bot.guilds[0].get_role(1125863416708472832))
     await reaction.remove(user)
+
+# mentions a user with a message after a certain amount of time
+@bot.tree.command(name="remindme")
+async def remindme(interaction: discord.Interaction, days: int = None, hours: int = None, minutes: int = None, seconds: int = None, message:str = None):
+    if not days:
+        days = 0
+    if not hours:
+        hours = 0
+    if not minutes:
+        minutes = 0
+    if not seconds:
+        seconds = 0
+    try:
+        await interaction.response.send_message("<t:" + str(int((datetime.datetime.now() + datetime.timedelta(seconds=(seconds + minutes * 60 + hours * 3600 + days * 86400))).timestamp())) + ":R>")
+        asyncio.create_task(reminderWait(interaction.user, interaction.channel, (seconds + minutes * 60 + hours * 3600 + days * 86400), message))
+    except Exception as e:
+        print(e)
+
+# waiting send reminder
+async def reminderWait(user, channel, seconds, message):
+    await asyncio.sleep(seconds)
+    if message:
+        await channel.send("**reminder for **" + user.mention)
+        await channel.send(embed = discord.Embed(color = 1, description = message, title = ("reminder for " + user.name)))
+    else:
+        await channel.send("**reminder for **" + user.mention)
