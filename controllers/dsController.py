@@ -1,7 +1,7 @@
 # imports
 import random
 import time
-from controllers import pokemonGbaController
+from controllers import gbaController
 from libraries import chatPlays
 from libraries.autoStream import *
 import aiohttp
@@ -11,6 +11,8 @@ pressTime = (random.randint(5, 12) / 10)
 lightPressTime = (random.randint(1, 3) / 100)
 holdTime = random.randint(5, 10)
 slightlyDifferentHoldTimeForWhateverFuckingReason = (random.randint(9, 15)/ 10)
+botPressTime = (random.randint(1, 12) / 10)
+botHoldTime = (random.randint(1, 100) / 10)
 
 # reading config
 config = configparser.ConfigParser()
@@ -39,32 +41,32 @@ async def idleBot():
                     dice = random.randint(1, 6)
                     match dice:
                         case 1:
-                            await pokemonGbaController.a(pressTime)
+                            await gbaController.a(botPressTime)
                         case 2:
-                            await pokemonGbaController.b(pressTime)
+                            await gbaController.b(botPressTime)
                         case 3:
-                            await x(pressTime)
+                            await x(botPressTime)
                         case 4:
-                            await y(pressTime)
+                            await y(botPressTime)
                         case 5:
-                            await l(pressTime)
+                            await l(botPressTime)
                         case 6:
-                            await r(pressTime)
+                            await r(botPressTime)
 
             # 75% chance of directionals
             else:
                 dice = random.randint(1, 5)
                 match dice:
                     case 1:
-                        await pokemonGbaController.up(pressTime)
+                        await gbaController.up(botPressTime)
                     case 2:
-                        await pokemonGbaController.down(pressTime)
+                        await gbaController.down(botPressTime)
                     case 3:
-                        await pokemonGbaController.left(pressTime)
+                        await gbaController.left(botPressTime)
                     case 4:
-                        await pokemonGbaController.right(pressTime)
+                        await gbaController.right(botPressTime)
                     case 5:
-                        await pokemonGbaController.wander(4, holdTime)
+                        await gbaController.wander(4, botHoldTime)
         else:
             if chatPlays.idleBotStatus:
                 chatPlays.idleBotStatus = False
@@ -90,39 +92,39 @@ async def inputBot():
                     dice = random.randint(1, 17)
                     match dice:
                         case 1:
-                            await pokemonGbaController.up(pressTime)
+                            await gbaController.up(botPressTime)
                         case 2:
-                            await pokemonGbaController.down(pressTime)
+                            await gbaController.down(botPressTime)
                         case 3:
-                            await pokemonGbaController.left(pressTime)
+                            await gbaController.left(botPressTime)
                         case 4:
-                            await pokemonGbaController.right(pressTime)
+                            await gbaController.right(botPressTime)
                         case 5:
-                            await pokemonGbaController.holdUp(holdTime)
+                            await gbaController.holdUp(botHoldTime)
                         case 6:
-                            await pokemonGbaController.holdDown(holdTime)
+                            await gbaController.holdDown(botHoldTime)
                         case 7:
-                            await pokemonGbaController.holdLeft(holdTime)
+                            await gbaController.holdLeft(botHoldTime)
                         case 8:
-                            await pokemonGbaController.holdDown(holdTime)
+                            await gbaController.holdDown(botHoldTime)
                         case 9:
-                            await pokemonGbaController.a(pressTime)
+                            await gbaController.a(botPressTime)
                         case 10:
-                            await pokemonGbaController.holdA(holdTime)
+                            await gbaController.holdA(botHoldTime)
                         case 11:
-                            await pokemonGbaController.b(pressTime)
+                            await gbaController.b(botPressTime)
                         case 12:
-                            await pokemonGbaController.holdB()
+                            await gbaController.holdB()
                         case 13:
-                            await x(pressTime)
+                            await x(botPressTime)
                         case 14:
-                            await y(pressTime)
+                            await y(botPressTime)
                         case 15:
-                            await l(pressTime)
+                            await l(botPressTime)
                         case 16:
-                            await r(pressTime)
+                            await r(botPressTime)
                         case 17:
-                            await pokemonGbaController.wander(2, holdTime)
+                            await gbaController.wander(2, botHoldTime)
 
             # chris snack controls
             elif chatPlays.currentSnack == "chris":
@@ -136,39 +138,39 @@ async def inputBot():
                     dice = random.randint(1, 17)
                     match dice:
                         case 1:
-                            await pokemonGbaController.up(pressTime)
+                            await gbaController.up(botPressTime)
                         case 2:
-                            await pokemonGbaController.down(pressTime)
+                            await gbaController.down(botPressTime)
                         case 3:
-                            await pokemonGbaController.left(pressTime)
+                            await gbaController.left(botPressTime)
                         case 4:
-                            await pokemonGbaController.right(pressTime)
+                            await gbaController.right(botPressTime)
                         case 5:
-                            await pokemonGbaController.holdUp(holdTime)
+                            await gbaController.holdUp(botHoldTime)
                         case 6:
-                            await pokemonGbaController.holdDown(holdTime)
+                            await gbaController.holdDown(botHoldTime)
                         case 7:
-                            await pokemonGbaController.holdLeft(holdTime)
+                            await gbaController.holdLeft(botHoldTime)
                         case 8:
-                            await pokemonGbaController.holdDown(holdTime)
+                            await gbaController.holdDown(botHoldTime)
                         case 9:
-                            await pokemonGbaController.a(pressTime)
+                            await gbaController.a(botPressTime)
                         case 10:
-                            await pokemonGbaController.holdA(holdTime)
+                            await gbaController.holdA(botHoldTime)
                         case 11:
-                            await pokemonGbaController.b(pressTime)
+                            await gbaController.b(botPressTime)
                         case 12:
-                            await pokemonGbaController.holdB()
+                            await gbaController.holdB()
                         case 13:
-                            await x(pressTime)
+                            await x(botPressTime)
                         case 14:
-                            await y(pressTime)
+                            await y(botPressTime)
                         case 15:
-                            await l(pressTime)
+                            await l(botPressTime)
                         case 16:
-                            await r(pressTime)
+                            await r(botPressTime)
                         case 17:
-                            await pokemonGbaController.wander(2, holdTime)
+                            await gbaController.wander(2, botHoldTime)
                         
             # burst snack controls
             elif chatPlays.currentSnack == "burst":
@@ -183,39 +185,39 @@ async def inputBot():
                         dice = random.randint(1, 17)
                         match dice:
                             case 1:
-                                await pokemonGbaController.up(pressTime)
+                                await gbaController.up(botPressTime)
                             case 2:
-                                await pokemonGbaController.down(pressTime)
+                                await gbaController.down(botPressTime)
                             case 3:
-                                await pokemonGbaController.left(pressTime)
+                                await gbaController.left(botPressTime)
                             case 4:
-                                await pokemonGbaController.right(pressTime)
+                                await gbaController.right(botPressTime)
                             case 5:
-                                await pokemonGbaController.holdUp(holdTime)
+                                await gbaController.holdUp(botHoldTime)
                             case 6:
-                                await pokemonGbaController.holdDown(holdTime)
+                                await gbaController.holdDown(botHoldTime)
                             case 7:
-                                await pokemonGbaController.holdLeft(holdTime)
+                                await gbaController.holdLeft(botHoldTime)
                             case 8:
-                                await pokemonGbaController.holdDown(holdTime)
+                                await gbaController.holdDown(botHoldTime)
                             case 9:
-                                await pokemonGbaController.a(pressTime)
+                                await gbaController.a(botPressTime)
                             case 10:
-                                await pokemonGbaController.holdA(holdTime)
+                                await gbaController.holdA(botHoldTime)
                             case 11:
-                                await pokemonGbaController.b(pressTime)
+                                await gbaController.b(botPressTime)
                             case 12:
-                                await pokemonGbaController.holdB()
+                                await gbaController.holdB()
                             case 13:
-                                await x(pressTime)
+                                await x(botPressTime)
                             case 14:
-                                await y(pressTime)
+                                await y(botPressTime)
                             case 15:
-                                await l(pressTime)
+                                await l(botPressTime)
                             case 16:
-                                await r(pressTime)
+                                await r(botPressTime)
                             case 17:
-                                await pokemonGbaController.wander(2, holdTime)
+                                await gbaController.wander(2, botHoldTime)
 
             # silly snack controls
             elif chatPlays.currentSnack == "silly":
@@ -229,23 +231,23 @@ async def inputBot():
                     dice = random.randint(1, 9)
                     match dice:
                         case 1:
-                            await pokemonGbaController.up(pressTime)
+                            await gbaController.up(botPressTime)
                         case 2:
-                            await pokemonGbaController.down(pressTime)
+                            await gbaController.down(botPressTime)
                         case 3:
-                            await pokemonGbaController.left(pressTime)
+                            await gbaController.left(botPressTime)
                         case 4:
-                            await pokemonGbaController.right(pressTime)
+                            await gbaController.right(botPressTime)
                         case 5:
-                            await pokemonGbaController.holdUp(holdTime)
+                            await gbaController.holdUp(botHoldTime)
                         case 6:
-                            await pokemonGbaController.holdDown(holdTime)
+                            await gbaController.holdDown(botHoldTime)
                         case 7:
-                            await pokemonGbaController.holdLeft(holdTime)
+                            await gbaController.holdLeft(botHoldTime)
                         case 8:
-                            await pokemonGbaController.holdDown(holdTime)
+                            await gbaController.holdDown(botHoldTime)
                         case 9:
-                            await pokemonGbaController.wander(2, holdTime)
+                            await gbaController.wander(2, botHoldTime)
             
             # cautious snack controls
             elif chatPlays.currentSnack == "cautious":
@@ -259,17 +261,17 @@ async def inputBot():
                     dice = random.randint(1, 6)
                     match dice:
                         case 1:
-                            await pokemonGbaController.north(lightPressTime)
+                            await gbaController.north(lightPressTime)
                         case 2:
-                            await pokemonGbaController.south(lightPressTime)
+                            await gbaController.south(lightPressTime)
                         case 3:
-                            await pokemonGbaController.east(lightPressTime)
+                            await gbaController.east(lightPressTime)
                         case 4:
-                            await pokemonGbaController.west(lightPressTime)
+                            await gbaController.west(lightPressTime)
                         case 5:
-                            await pokemonGbaController.b(pressTime)
+                            await gbaController.b(botPressTime)
                         case 6:
-                            await pokemonGbaController.mashB(pressTime)
+                            await gbaController.mashB(botPressTime)
 
             # sonic snack controls
             elif chatPlays.currentSnack == "sonic":
@@ -283,27 +285,27 @@ async def inputBot():
                     dice = random.randint(1, 6)
                     match dice:
                         case 1:
-                            await pokemonGbaController.north(lightPressTime)
+                            await gbaController.north(lightPressTime)
                         case 2:
-                            await pokemonGbaController.south(lightPressTime)
+                            await gbaController.south(lightPressTime)
                         case 3:
-                            await pokemonGbaController.east(lightPressTime)
+                            await gbaController.east(lightPressTime)
                         case 4:
-                            await pokemonGbaController.west(lightPressTime)
+                            await gbaController.west(lightPressTime)
                         case 5:
-                            await pokemonGbaController.mashA(pressTime)
+                            await gbaController.mashA(botPressTime)
                         case 6:
-                            await pokemonGbaController.mashB(pressTime)
+                            await gbaController.mashB(botPressTime)
                         case 7:
-                            await pokemonGbaController.wander(4, holdTime)
+                            await gbaController.wander(4, botHoldTime)
                         case 8:
-                            await pokemonGbaController.upWander(holdTime)
+                            await gbaController.upWander(botHoldTime)
                         case 9:
-                            await pokemonGbaController.downWander(holdTime)
+                            await gbaController.downWander(botHoldTime)
                         case 10:
-                            await pokemonGbaController.leftWander(holdTime)
+                            await gbaController.leftWander(botHoldTime)
                         case 11:
-                            await pokemonGbaController.rightWander(holdTime)
+                            await gbaController.rightWander(botHoldTime)
         else:
             await asyncio.sleep(5)
 
@@ -331,26 +333,45 @@ async def controller(message):
                 await asyncio.sleep(5)
 
         # setting up odds based on view count
+        dice = random.randint(1, 100)
+        input = False
+
+        # try/except for if the twitch api fucks up and returns view count as None
         try:
+
+            # 10% chance of input
             if int(streamResponse.get("data")[0].get("viewer_count")) > 100:
-                dice = (random.randint(1, 10))
-            elif int(streamResponse.get("data")[0].get("viewer_count")) > 50:
-                dice = random.randint(1, 5)
-            elif int(streamResponse.get("data")[0].get("viewer_count")) > 35:
-                dice = random.randint(1, 5)
-                if dice == 1 or dice == 2:
-                    dice = 1
-            elif int(streamResponse.get("data")[0].get("viewer_count")) > 20:
-                dice = (random.randint(1, 4))
-                if dice != 1:
-                    dice = 1
+                if dice <= 10:
+                    input = True
+
+            # 25% chance of input
+            elif int(streamResponse.get("data")[0].get("viewer_count")) > 100:
+                if dice <= 25:
+                    input = True
+
+            # 50% chance of input
+            elif int(streamResponse.get("data")[0].get("viewer_count")) > 75:
+                if dice <= 50:
+                    input = True
+
+            # 75% chance of input
+            elif int(streamResponse.get("data")[0].get("viewer_count")) > 45:
+                if dice <= 75:
+                    input = True
+
+            # 95% chance of input
+            elif int(streamResponse.get("data")[0].get("viewer_count")) > 25:
+                if dice <= 95:
+                    input = True
+
+            # error handling
             else:
-                dice = 1
+                input = True
         except:
-            dice = 1
+            input = True
 
         # making input
-        if dice == 1:
+        if input:
             message = message.lower()
             dice = random.randint(1, 40)
 
@@ -359,65 +380,65 @@ async def controller(message):
                 dice = random.randint(1, 34)
                 match dice:
                     case 1:
-                        await pokemonGbaController.up(pressTime)
+                        await gbaController.up(pressTime)
                     case 2:
-                        await pokemonGbaController.down(pressTime)
+                        await gbaController.down(pressTime)
                     case 3:
-                        await pokemonGbaController.left(pressTime)
+                        await gbaController.left(pressTime)
                     case 4:
-                        await pokemonGbaController.right(pressTime)
+                        await gbaController.right(pressTime)
                     case 5:
-                        await pokemonGbaController.holdUp(holdTime)
+                        await gbaController.holdUp(holdTime)
                     case 6:
-                        await pokemonGbaController.holdDown(holdTime)
+                        await gbaController.holdDown(holdTime)
                     case 7:
-                        await pokemonGbaController.holdLeft(holdTime)
+                        await gbaController.holdLeft(holdTime)
                     case 8:
-                        await pokemonGbaController.holdRight(holdTime)
+                        await gbaController.holdRight(holdTime)
                     case 9:
-                        await pokemonGbaController.a(pressTime)
+                        await gbaController.a(pressTime)
                     case 10:
-                        await pokemonGbaController.holdA(holdTime)
+                        await gbaController.holdA(holdTime)
                     case 11:
-                        await pokemonGbaController.mashA(pressTime)
+                        await gbaController.mashA(pressTime)
                     case 12:
-                        await pokemonGbaController.b(pressTime)
+                        await gbaController.b(pressTime)
                     case 13:
-                        await pokemonGbaController.holdB()
+                        await gbaController.holdB()
                     case 14:
-                        await pokemonGbaController.mashB(pressTime)
+                        await gbaController.mashB(pressTime)
                     case 15:
                         await x(pressTime)
                     case 16:
                         await y(pressTime)
                     case 17:
-                        await pokemonGbaController.select(pressTime)
+                        await gbaController.select(pressTime)
                     case 18:
-                        await pokemonGbaController.start(pressTime)
+                        await gbaController.start(pressTime)
                     case 19:
                         await l(pressTime)
                     case 20:
                         await r(pressTime)
                     case 21:
-                        await pokemonGbaController.stop()
+                        await gbaController.stop()
                     case 22:
-                        await pokemonGbaController.wander(4, holdTime)
+                        await gbaController.wander(4, holdTime)
                     case 23:
-                        await pokemonGbaController.north(lightPressTime)
+                        await gbaController.north(lightPressTime)
                     case 24:
-                        await pokemonGbaController.south(lightPressTime)
+                        await gbaController.south(lightPressTime)
                     case 25:
-                        await pokemonGbaController.west(lightPressTime)
+                        await gbaController.west(lightPressTime)
                     case 26:
-                        await pokemonGbaController.east(lightPressTime)
+                        await gbaController.east(lightPressTime)
                     case 27:
-                        await pokemonGbaController.upWander(holdTime)
+                        await gbaController.upWander(holdTime)
                     case 28:
-                        await pokemonGbaController.downWander(holdTime)
+                        await gbaController.downWander(holdTime)
                     case 29:
-                        await pokemonGbaController.leftWander(holdTime)
+                        await gbaController.leftWander(holdTime)
                     case 30:
-                        await pokemonGbaController.rightWander(holdTime)
+                        await gbaController.rightWander(holdTime)
                     case 31:
                         await leftPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
                     case 32:
@@ -429,55 +450,55 @@ async def controller(message):
             # 2.5% chance of opposite input
             elif dice == 2:
                 if message == "a" or "shoot" in message:
-                    await pokemonGbaController.b(pressTime)
+                    await gbaController.b(pressTime)
                 elif "hold a" in message:
-                    await pokemonGbaController.holdB()
+                    await gbaController.holdB()
                 elif "mash a" in message:
-                    await pokemonGbaController.mashB(pressTime)
+                    await gbaController.mashB(pressTime)
                 elif message == "b":
-                    await pokemonGbaController.a(pressTime)
+                    await gbaController.a(pressTime)
                 elif "hold b" in message:
-                    await pokemonGbaController.holdA(holdTime)
+                    await gbaController.holdA(holdTime)
                 elif "mash b" in message:
-                    await pokemonGbaController.mashA(pressTime)
+                    await gbaController.mashA(pressTime)
                 elif message == "x":
                     await y(pressTime)
                 elif message == "y":
                     await x(pressTime)
                 elif "select" in message:
-                    await pokemonGbaController.start(pressTime)
+                    await gbaController.start(pressTime)
                 elif "start" in message:
-                    await pokemonGbaController.select(pressTime)
+                    await gbaController.select(pressTime)
                 elif message == "l":
                     await r(pressTime)
                 elif message == "r":
                     await l(pressTime)
                 elif "up wander" in message:
-                    await pokemonGbaController.downWander(holdTime)
+                    await gbaController.downWander(holdTime)
                 elif "down wander" in message:
-                    await pokemonGbaController.upWander(holdTime)
+                    await gbaController.upWander(holdTime)
                 elif "left wander" in message:
-                    await pokemonGbaController.rightWander(holdTime)
+                    await gbaController.rightWander(holdTime)
                 elif "right wander" in message:
-                    await pokemonGbaController.leftWander(holdTime)
+                    await gbaController.leftWander(holdTime)
                 elif "wander" in message:
-                    await pokemonGbaController.stop()
+                    await gbaController.stop()
                 elif "hold up" in message:
-                    await pokemonGbaController.holdDown(holdTime)
+                    await gbaController.holdDown(holdTime)
                 elif "hold down" in message:
-                    await pokemonGbaController.holdUp(holdTime)
+                    await gbaController.holdUp(holdTime)
                 elif "hold left" in message:
-                    await pokemonGbaController.holdRight(holdTime)
+                    await gbaController.holdRight(holdTime)
                 elif "hold right" in message:
-                    await pokemonGbaController.holdLeft(holdTime)
+                    await gbaController.holdLeft(holdTime)
                 elif "north" in message:
-                    await pokemonGbaController.south(lightPressTime)
+                    await gbaController.south(lightPressTime)
                 elif "south" in message:
-                    await pokemonGbaController.north(lightPressTime)
+                    await gbaController.north(lightPressTime)
                 elif "west" in message:
-                    await pokemonGbaController.east(lightPressTime)
+                    await gbaController.east(lightPressTime)
                 elif "east" in message:
-                    await pokemonGbaController.west(lightPressTime)
+                    await gbaController.west(lightPressTime)
                 elif "up+" in message:
                     await downPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
                 elif "down+" in message:
@@ -487,74 +508,74 @@ async def controller(message):
                 elif "right+" in message:
                     await leftPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
                 elif "up" in message:
-                    await pokemonGbaController.down(pressTime)
+                    await gbaController.down(pressTime)
                 elif "down" in message:
-                    await pokemonGbaController.up(pressTime)
+                    await gbaController.up(pressTime)
                 elif "left" in message:
-                    await pokemonGbaController.right(pressTime)
+                    await gbaController.right(pressTime)
                 elif "right" in message:
-                    await pokemonGbaController.left(pressTime)
+                    await gbaController.left(pressTime)
                 elif "stop" in message:
-                    await pokemonGbaController.upWander(holdTime)
-                    await pokemonGbaController.downWander(holdTime)
-                    await pokemonGbaController.leftWander(holdTime)
-                    await pokemonGbaController.rightWander(holdTime)
+                    await gbaController.upWander(holdTime)
+                    await gbaController.downWander(holdTime)
+                    await gbaController.leftWander(holdTime)
+                    await gbaController.rightWander(holdTime)
                 elif landmines[0] in message or landmines[1] in message or landmines[2] in message or landmines[3] in message or landmines[4] in message:
                     if chatPlays.landminesActive:
-                        await pokemonGbaController.stop()
+                        await gbaController.stop()
 
             # 95% chance of correct inputs
             else:
                 if message == "a" or "shoot" in message:
-                    await pokemonGbaController. a(pressTime)
+                    await gbaController. a(pressTime)
                 elif "hold a" in message:
-                    await pokemonGbaController.holdA(holdTime)
+                    await gbaController.holdA(holdTime)
                 elif "mash a" in message:
-                    await pokemonGbaController.mashA(pressTime)
+                    await gbaController.mashA(pressTime)
                 elif message == "b":
-                    await pokemonGbaController.b(pressTime)
+                    await gbaController.b(pressTime)
                 elif "hold b" in message:
-                    await pokemonGbaController.holdB()
+                    await gbaController.holdB()
                 elif "mash b" in message:
-                    await pokemonGbaController.mashB(pressTime)
+                    await gbaController.mashB(pressTime)
                 elif message == "x":
                     await x(pressTime)
                 elif message == "y":
                     await y(pressTime)
                 elif "select" in message:
-                    await pokemonGbaController.select(pressTime)
+                    await gbaController.select(pressTime)
                 elif "start" in message:
-                    await pokemonGbaController.start(pressTime)
+                    await gbaController.start(pressTime)
                 elif message == "l":
                     await l(pressTime)
                 elif message == "r":
                     await r(pressTime)
                 elif "up wander" in message:
-                    await pokemonGbaController.upWander(holdTime)
+                    await gbaController.upWander(holdTime)
                 elif "down wander" in message:
-                    await pokemonGbaController.downWander(holdTime)
+                    await gbaController.downWander(holdTime)
                 elif "left wander" in message:
-                    await pokemonGbaController.leftWander(holdTime)
+                    await gbaController.leftWander(holdTime)
                 elif "right wander" in message:
-                    await pokemonGbaController.rightWander(holdTime)
+                    await gbaController.rightWander(holdTime)
                 elif "wander" in message:
-                    await pokemonGbaController.wander(4, holdTime)
+                    await gbaController.wander(4, holdTime)
                 elif "hold up" in message:
-                    await pokemonGbaController.holdUp(holdTime)
+                    await gbaController.holdUp(holdTime)
                 elif "hold down" in message:
-                    await pokemonGbaController.holdDown(holdTime)
+                    await gbaController.holdDown(holdTime)
                 elif "hold left" in message:
-                    await pokemonGbaController.holdLeft(holdTime)
+                    await gbaController.holdLeft(holdTime)
                 elif "hold right" in message:
-                    await pokemonGbaController.holdRight(holdTime)
+                    await gbaController.holdRight(holdTime)
                 elif "north" in message:
-                    await pokemonGbaController.north(lightPressTime)
+                    await gbaController.north(lightPressTime)
                 elif "south" in message:
-                    await pokemonGbaController.south(lightPressTime)
+                    await gbaController.south(lightPressTime)
                 elif "west" in message:
-                    await pokemonGbaController.west(lightPressTime)
+                    await gbaController.west(lightPressTime)
                 elif "east" in message:
-                    await pokemonGbaController.east(lightPressTime)
+                    await gbaController.east(lightPressTime)
                 elif "up+" in message:
                     await upPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
                 elif "down+" in message:
@@ -564,18 +585,18 @@ async def controller(message):
                 elif "right+" in message:
                     await rightPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
                 elif "up" in message:
-                    await pokemonGbaController.up(pressTime)
+                    await gbaController.up(pressTime)
                 elif "down" in message:
-                    await pokemonGbaController.down(pressTime)
+                    await gbaController.down(pressTime)
                 elif "left" in message:
-                    await pokemonGbaController.left(pressTime)
+                    await gbaController.left(pressTime)
                 elif "right" in message:
-                    await pokemonGbaController.right(pressTime)
+                    await gbaController.right(pressTime)
                 elif "stop" in message:
-                    await pokemonGbaController.stop()
+                    await gbaController.stop()
                 elif landmines[0] in message or landmines[1] in message or landmines[2] in message or landmines[3] in message or landmines[4] in message:
                     if chatPlays.landminesActive:
-                        await pokemonGbaController.wander(2, holdTime)
+                        await gbaController.wander(2, holdTime)
 
 # define controls down here
 async def x(pressTime):
