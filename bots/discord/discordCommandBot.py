@@ -16,6 +16,14 @@ config.read(os.path.abspath((os.path.join(directory, "config.ini"))))
 commandBotToken = config.get("discord", "command bot token")
 bot = discord.Client(command_prefix = "!", intents = discord.Intents.all())
 
+# it's yagging time
+@bot.event
+async def on_ready():
+
+    while True:
+        await asyncio.sleep(random.randint(43200, 86400))
+        await bot.get_channel(1125230641563312238).send("it's yagging time")
+
 # void counter
 @bot.event
 async def on_member_update(before, after):
