@@ -81,7 +81,7 @@ class Bot(commands.Bot):
     # sends list of chat plays controls
     @commands.command()
     async def controls(self, ctx: commands.Context):
-        await ctx.send("[bot] (capitalization doesnt matter) up, down, left, right, hold up, hold down, hold left, hold right, a, hold a, mash a, b, hold b, mash b, x, y, l, r, start, select, stop, wander, up wander, down wander, left wander, right wander, north, south, east, west")
+        await ctx.send("[bot] (capitalization doesnt matter) up, down, left, right, left+, right+, up+, down+ hold up, hold down, hold left, hold right, a, hold a, mash a, b, hold b, mash b, x, y, l, r, start, select, stop, wander, up wander, down wander, left wander, right wander, north, south, east, west")
 
     # sends what's going on
     @commands.command()
