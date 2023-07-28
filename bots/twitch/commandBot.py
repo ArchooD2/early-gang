@@ -74,7 +74,7 @@ class Bot(commands.Bot):
                 if not result:
                     await cursor.execute("INSERT INTO chatters (id) VALUES (?)", (await getBroadcasterId(message.author.name),))
                     await db.commit()
-                    await self.connected_channels[0].send("[bot] welcome " + message.author.name + " to early_gang, where we play games and vibe while we wait for dougdoug to stream again. right now we are trying to beat peggle before dougdoug streams again. the controls are up, down, right, start, a, b, x, and y (more at !controls) and additionally the snack family may try to \"help\" you out. enjoy!")
+                    await self.connected_channels[0].send("[bot] welcome " + message.author.name + " to early_gang, where we play games and vibe while we wait for dougdoug to stream again. right now we are trying to beat peggle before dougdoug streams again. the controls are up, down, left, right, start, a, b, x, and y (more at !controls) and additionally the snack family may try to \"help\" you out. enjoy!")
 
         await self.handle_commands(message)
 
