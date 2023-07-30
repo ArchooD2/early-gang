@@ -42,15 +42,15 @@ async def isLive(channelName):
             async with session.get("https://api.twitch.tv/helix/users") as response:
                 rateLimit = response.headers.get("Ratelimit-Remaining")
                 if rateLimit != "0":
-                    async with session.get("https://api.twitch.tv/helix/streams?user_login=" + channelName) as stream_response:
-                        if stream_response.status == 200:
-                            data = await stream_response.json()
+                    async with session.get("https://api.twitch.tv/helix/streams?user_login=" + channelName) as streamResponse:
+                        if streamResponse.status == 200:
+                            data = await streamResponse.json()
                             if data["data"]:
                                 return True
                             else:
                                 return False
                         else:
-                            print("Oops, something went wrong. Double check your info file.")
+                            print("error checking if channel is live" + await streamResponse.json())
                             return None
                # trying again
                 else:
@@ -80,7 +80,7 @@ async def getBroadcasterId(channelName):
 
                     # error handling
                     else:
-                        print(channelName + " is misspelled or something")
+                        print("error getting id " + await response.json())
 
                 # more error handling
                 else:
