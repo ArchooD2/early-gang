@@ -84,7 +84,7 @@ async def inputBot():
             if chatPlays.currentSnack == "sleepy":
                 
                 # time between inputs
-                await asyncio.sleep(random.randint(30, 360))
+                await asyncio.sleep(random.randint(60, 720))
 
                 # 5% chance of no action
                 dice = random.randint(1, 100)
@@ -130,7 +130,7 @@ async def inputBot():
             elif chatPlays.currentSnack == "chris":
                 
                 # time between inputs
-                await asyncio.sleep(random.randint(5, 60))
+                await asyncio.sleep(random.randint(10, 120))
 
                 # 33% chance of no action
                 dice = random.randint(1, 3)
@@ -176,7 +176,7 @@ async def inputBot():
             elif chatPlays.currentSnack == "burst":
                 
                 # time between inputs
-                await asyncio.sleep(random.randint(150, 450))
+                await asyncio.sleep(random.randint(300, 900))
 
                 # 10% chance of no action
                 dice = random.randint(1, 10)
@@ -223,7 +223,7 @@ async def inputBot():
             elif chatPlays.currentSnack == "silly":
                 
                 # time between inputs
-                await asyncio.sleep(random.randint(5, 40))
+                await asyncio.sleep(random.randint(10, 80))
 
                 # 33% chance of no action
                 dice = random.randint(1, 3)
@@ -253,7 +253,7 @@ async def inputBot():
             elif chatPlays.currentSnack == "cautious":
                 
                 # time between inputs
-                await asyncio.sleep(random.randint(5, 60))
+                await asyncio.sleep(random.randint(10, 120))
 
                 # 20% chance of no action
                 dice = random.randint(1, 5)
@@ -277,7 +277,7 @@ async def inputBot():
             elif chatPlays.currentSnack == "sonic":
 
                 # time between inputs
-                await asyncio.sleep(random.randint(10, 30))
+                await asyncio.sleep(random.randint(20, 60))
 
                 # 10% chance of no action
                 dice = random.randint(1, 10)
