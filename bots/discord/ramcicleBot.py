@@ -16,7 +16,7 @@ bot = discord.Client(intents = discord.Intents.all())
 
 @bot.event
 async def on_message(message):
-    if message.author.id == 232162258229264384:
+    if message.author.id == 232162258229264384 and 1 == 2:
 
         # timing out
         try:
