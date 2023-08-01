@@ -15,8 +15,6 @@ async def main():
         await startTTS()
         await startChatPlays()
         await startAutoSave()
-        await startIdleBot()
-        await startInputBot()
 
     # infinite loop to check stream statuses
     while True:
@@ -29,10 +27,6 @@ async def main():
                 await stopTTS()
             if chatPlaying:
                 await stopChatPlays()
-            if idleBotPlaying:
-                await stopIdleBot()
-            if inputBotPlaying:
-                await stopInputBot()
             if autoSaving:
                 await stopAutoSave()
 
@@ -53,10 +47,6 @@ async def main():
                 await startChatPlays()
             if not autoSaving:
                 await startAutoSave()
-            if not idleBotPlaying:
-                await startIdleBot()
-            if not inputBotPlaying:
-                await startInputBot()
 
         await asyncio.sleep(3)
 
