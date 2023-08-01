@@ -5,7 +5,6 @@ import configparser
 import os
 import aiohttp
 import pyautogui
-import requests
 import asyncio
 
 # setting up variables
@@ -16,14 +15,11 @@ directory = ""
 if os.path.exists(os.path.abspath(os.path.join("files"))):
     directory = os.path.abspath(os.path.join("files"))
 else:
-    print("looking for files directory")
     for root, dirs, files in os.walk("\\"):
         if "early-gang-main\\files\\config.ini" in os.path.abspath(os.path.join(root, "config.ini")):
             directory = os.path.abspath(os.path.join(root))
 if directory == "":
-    print("couldn't find directory")
-else:
-    print(directory)
+    print("\033[31mcouldn't find directory\033[0m")
 
 # reading config
 config = configparser.ConfigParser()

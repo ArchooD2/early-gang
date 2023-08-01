@@ -3,18 +3,21 @@
 # also you gotta know how to use sqlite3 so good luck ;)
 # not much documentation here because even i don't know what the fuck this object oriented programming shit is doing in python
 
+# changing system path
+import sys
+sys.path.insert(0, sys.path[0].replace("bots\\twitch", ""))
+
 # imports
 from datetime import datetime, timezone
-
 import aiosqlite
 from twitchio.ext import commands
 from libraries.chatPlays import *
 
 # setting up variables
-databaseLock = asyncio.Lock()
 chatters = []
 live = False
 firstRedeemed = True
+activeCodes = []
 
 class Bot(commands.Bot):
 
@@ -35,7 +38,6 @@ class Bot(commands.Bot):
 
     # whenever a user joins write their id and entry time into an array and add their id to the database if not there
     async def event_join(self, channel, user):
-
         global chatters
 
         # adds chatter id, watch time start, and uptime start
@@ -43,15 +45,14 @@ class Bot(commands.Bot):
             chatters += [[await getBroadcasterId(user.name), time.time(), time.time()]]
 
         # reading database
-        async with databaseLock:
             async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                cursor = await db.execute("SELECT id FROM economy WHERE id=?", (await getBroadcasterId(user.name),))
-                result = await cursor.fetchone()
+                async with db.execute("SELECT twitchId FROM economy WHERE twitchId=?", (await getBroadcasterId(user.name),)) as cursor:
+                    result = await cursor.fetchone()
 
-                # adding id if not in database
-                if result is None:
-                    await db.execute("INSERT INTO economy (id, watchtime, points) VALUES (?, ?, ?)", (await getBroadcasterId(user.name), 0, 0))
-                    await db.commit()
+                    # adding id if not in database
+                    if result is None:
+                        await db.execute("INSERT INTO economy (twitchId, watchtime, points, discordId) VALUES (?, ?, ?, ?)", (await getBroadcasterId(user.name), 0, 0, None))
+                        await db.commit()
 
     # whenever a user leaves add their remaining time to the csv and remove them from the array
     async def event_part(self, user):
@@ -59,25 +60,61 @@ class Bot(commands.Bot):
         global chatters
 
         # finding chatter's time
+        chatter = None
         for element in chatters:
             if element[0] == await getBroadcasterId(user.name):
                 chatter = element
                 break
-        else:
-            chatter = None
 
         # writing chatter time to file
         if chatter and await isLive(yourChannelName):
-            async with databaseLock:
-                async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                    cursor = await db.cursor()
-                    await cursor.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(user.name),))
+            async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
+                async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(user.name),)) as cursor:
                     result = await cursor.fetchone()
-                    await cursor.execute("UPDATE economy SET watchtime=? WHERE id=?", ((float(result[1]) + (time.time() - chatter[1])), await getBroadcasterId(user.name)))
-                    await db.commit()
+                    if result:
+                        await cursor.execute("UPDATE economy SET watchtime=? WHERE twitchId=?", ((float(result[1]) + (time.time() - chatter[1])), await getBroadcasterId(user.name)))
+                        await db.commit()
 
             # removing chatter from active chatter list
-            chatters.remove(chatter)
+            if chatter in chatters:
+                chatters.remove(chatter)
+
+    # second part of linking discord to twitch
+    @commands.command()
+    async def link(self, ctx: commands.Context):
+        if ctx.message.content == "!link" or ctx.message.content == "!link ":
+            await ctx.send("[bot] please include your code you got from discord")
+
+        else:
+            ctx.message.content = ctx.message.content.replace("!link ", "")
+
+            # checking what ids have a code rn
+            codeFound = False
+            for codes in activeCodes:
+
+                # if id found
+                if str(codes[2]) == ctx.message.content:
+                    codeFound = True
+
+                    # updating database
+                    async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
+                        async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
+                            result = await cursor.fetchone()
+
+                            # if there's no discord id
+                            if result[3] == None or result[3] == "None":
+                                await db.execute("UPDATE economy SET discordId=? WHERE twitchId=?", (codes[0], await getBroadcasterId(ctx.author.name)))
+                                await db.commit()
+                                await ctx.send("[bot] discord linked, " + codes[1])
+
+                            else:
+                                await ctx.send("[bot] your account is already linked")
+
+                    activeCodes.remove(codes)
+                    break
+
+            if not codeFound:
+                await ctx.send("[bot] double check your code")
 
     # sends a message with the user's watch time formatted as days, hours, minutes, seconds
     @commands.command()
@@ -87,15 +124,15 @@ class Bot(commands.Bot):
         if ctx.message.content == "!watchtime" or ctx.message.content == "!watchtime ":
 
             async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                async with db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
+                async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
                     result = await cursor.fetchone()
-            # letting whitelisters check others' points
 
+        # letting whitelisters check others' points
         else:
             if ctx.author.name in whiteListers:
-                ctx.message.content = ctx.message.content.replace("!bp ", "")
+                ctx.message.content = ctx.message.content.replace("!watchtime ", "")
                 async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                    async with db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.message.content),)) as cursor:
+                    async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.message.content),)) as cursor:
                         result = await cursor.fetchone()
 
         # calculating output
@@ -129,7 +166,8 @@ class Bot(commands.Bot):
             if duration == "":
                 duration += str(seconds) + " seconds"
 
-            if ctx.message.content == "!bp" or ctx.message.content != "!bp ":
+            # outputting based on command
+            if ctx.message.content == "!watchtime" or ctx.message.content == "!watchtime ":
                 await ctx.send("[bot] " + ctx.author.name + " has watched " + yourChannelName + " for " + duration)
             else:
                 await ctx.send("[bot] " + ctx.message.content + " has watched " + yourChannelName + " for " + duration)
@@ -142,7 +180,7 @@ class Bot(commands.Bot):
         if ctx.message.content == "!bp" or ctx.message.content == "!bp ":
 
             async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                async with db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
+                async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
                     result = await cursor.fetchone()
 
             # sending result if id exists
@@ -155,14 +193,12 @@ class Bot(commands.Bot):
 
                 ctx.message.content = ctx.message.content.replace("!bp ", "")
                 async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                    async with db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.message.content),)) as cursor:
+                    async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.message.content),)) as cursor:
                         result = await cursor.fetchone()
 
-                        # sending result if id exists
-                        if result:
-                            await ctx.send("[bot] " + ctx.message.content + " has " + str(result[2]) + " basement pesos")
-
-
+                # sending result if id exists
+                if result:
+                    await ctx.send("[bot] " + ctx.message.content + " has " + str(result[2]) + " basement pesos")
 
     # first user to redeem this gets points but those afterward lose points
     @commands.command()
@@ -177,7 +213,7 @@ class Bot(commands.Bot):
             while not connected:
                 try:
                     async with aiohttp.ClientSession() as session:
-                        response = await session.get("https://api.twitch.tv/helix/users",headers = {"Client-ID": clientID, "Authorization": "Bearer " + accessToken})
+                        response = await session.get("https://api.twitch.tv/helix/users", headers = {"Client-ID": clientID, "Authorization": "Bearer " + accessToken})
                         rateLimit = response.headers.get("Ratelimit-Remaining")
                         if rateLimit != "0":
                             userResponse = await session.get(f"https://api.twitch.tv/helix/users?login={yourChannelName}", headers={"Client-ID": clientID, "Authorization": "Bearer " + accessToken})
@@ -197,28 +233,28 @@ class Bot(commands.Bot):
                 points = 1000
 
             # searching database for id
-            async with databaseLock:
-                async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
-                    async with db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
-                        result = await cursor.fetchone()
+            async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
+                async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
+                    result = await cursor.fetchone()
 
-                        # updating points
-                        if result:
+                    # updating points
+                    if result:
 
-                            # if first !first, give points
-                            if not firstRedeemed:
-                                await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] + points), await getBroadcasterId(ctx.author.name)))
+                        # if first !first, give points
+                        if not firstRedeemed:
+                            await db.execute("UPDATE economy SET points=? WHERE twitchId=?", ((result[2] + points), await getBroadcasterId(ctx.author.name)))
 
-                                await ctx.send("[bot] " + ctx.author.name + " is first " + ctx.author.name + " gained " + str(points) + " basement pesos")
+                            await ctx.send("[bot] " + ctx.author.name + " is first " + ctx.author.name + " gained " + str(points) + " basement pesos")
+                            firstRedeemed = True
 
-                            # if not first !first, take points
+                        # if not first !first, take points
+                        else:
+                            if result[2] > 100:
+                                await db.execute("UPDATE economy SET points=? WHERE twitchId=?", ((result[2] - points), await getBroadcasterId(ctx.author.name)))
                             else:
-                                if result[2] > 100:
-                                    await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - points), await getBroadcasterId(ctx.author.name)))
-                                else:
-                                    await db.execute("UPDATE economy SET points=? WHERE id=?", (0, await getBroadcasterId(ctx.author.name)))
-                                await ctx.send("[bot] " + ctx.author.name + " is not first " + ctx.author.name + " lost " + str(points) + " basement pesos")
-                            await db.commit()
+                                await db.execute("UPDATE economy SET points=? WHERE twitchId=?", (0, await getBroadcasterId(ctx.author.name)))
+                            await ctx.send("[bot] " + ctx.author.name + " is not first " + ctx.author.name + " lost " + str(points) + " basement pesos")
+                        await db.commit()
 
     # lets users give their points to each other
     @commands.command()
@@ -229,7 +265,7 @@ class Bot(commands.Bot):
 
             # error handling
             if ctx.message.content == "!giveBp" or ctx.message.content == "!giveBp ":
-                    await ctx.send("please include the user and amount your command messages formatted like !giveBP user, 100")
+                await ctx.send("please include the user and amount your command messages formatted like !giveBP user, 100")
 
             # finding and updating the appropriate points
             else:
@@ -237,12 +273,10 @@ class Bot(commands.Bot):
                 ctx.message.content = ctx.message.content.split(", ")
 
                 if await getBroadcasterId(ctx.message.content[0]) and ctx.message.content[0] not in whiteListers or ctx.author.name == ctx.message.content[0]:
-                    async with databaseLock:
-                        async with aiosqlite.connect( os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
-                            cursor = await db.cursor()
-                            await cursor.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.message.content[0]),))
+                    async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
+                        async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.message.content[0]),)) as cursor:
                             result = await cursor.fetchone()
-                            await cursor.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] + int(ctx.message.content[1])), await getBroadcasterId(ctx.message.content[0])))
+                            await cursor.execute("UPDATE economy SET points=? WHERE twitchId=?", ((result[2] + int(ctx.message.content[1])), await getBroadcasterId(ctx.message.content[0])))
                             await db.commit()
 
                     await ctx.send("[bot] gave " + ctx.message.content[0] + " " + ctx.message.content[1] + " basement pesos")
@@ -269,34 +303,32 @@ class Bot(commands.Bot):
                 elif await getBroadcasterId(ctx.author.name) and await getBroadcasterId(ctx.message.content[0]):
 
                     # finding giver and taker
-                    async with databaseLock:
-                        async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
-                            cursor = await db.cursor()
-                            await cursor.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),))
+                    async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
+                        async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
                             giver = await cursor.fetchone()
 
-                            await cursor.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.message.content[0]),))
+                        async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.message.content[0]),)) as cursor:
                             taker = await cursor.fetchone()
 
-                            # check if giver has enough points
-                            if giver[2] <= int(ctx.message.content[1]):
-                                await ctx.send("[bot] not enough basement pesos")
+                        # check if giver has enough points
+                        if giver[2] <= int(ctx.message.content[1]):
+                            await ctx.send("[bot] not enough basement pesos")
 
-                            elif str((ctx.author.name).lower()) == str((ctx.message.content[0]).lower()):
-                                await ctx.send("[bot] nice try")
+                        elif str((ctx.author.name).lower()) == str((ctx.message.content[0]).lower()):
+                            await ctx.send("[bot] nice try")
 
-                            # transfer money
-                            elif giver and taker:
-                                print(giver, taker)
-                                await cursor.execute("UPDATE economy SET points=? WHERE id=?", ((giver[2] - int(ctx.message.content[1])), await getBroadcasterId(ctx.author.name)))
-                                await cursor.execute("UPDATE economy SET points=? WHERE id=?", ((taker[2] + int(ctx.message.content[1])), await getBroadcasterId(ctx.message.content[0])))
-                                await db.commit()
+                        # transfer money
+                        elif giver and taker:
 
-                                await ctx.send("[bot] " + ctx.author.name + " gave " + ctx.message.content[0] + " " +ctx.message.content[1] + " basement pesos")
+                            await cursor.execute("UPDATE economy SET points=? WHERE twitchId=?", ((giver[2] - int(ctx.message.content[1])), await getBroadcasterId(ctx.author.name)))
+                            await cursor.execute("UPDATE economy SET points=? WHERE twitchId=?", ((taker[2] + int(ctx.message.content[1])), await getBroadcasterId(ctx.message.content[0])))
+                            await db.commit()
 
-                            # error handling
-                            else:
-                                await ctx.send("[bot] couldn't find at least one user")
+                            await ctx.send("[bot] " + ctx.author.name + " gave " + ctx.message.content[0] + " " + ctx.message.content[1] + " basement pesos")
+
+                        # error handling
+                        else:
+                            await ctx.send("[bot] couldn't find at least one user")
                 else:
                     await ctx.send("[bot] couldn't find at least one user")
 
@@ -321,16 +353,15 @@ class Bot(commands.Bot):
 
                 # seeing if user exists
                 elif await getBroadcasterId(ctx.message.content[0]):
-                    async with databaseLock:
-                        async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                            async with db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.message.content[0]),)) as cursor:
-                                result = await cursor.fetchone()
+                    async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
+                        async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.message.content[0]),)) as cursor:
+                            result = await cursor.fetchone()
 
-                                # if user in database
-                                if result:
-                                    await db.execute("UPDATE economy SET points=? WHERE id=?", (result[2] - int(ctx.message.content[1]), await getBroadcasterId(ctx.message.content[0])))
-                                    await db.commit()
-                                    await ctx.send("[bot] took from " + ctx.message.content[0] + " " + ctx.message.content[1] + " basement pesos")
+                        # if user in database
+                        if result:
+                            await db.execute("UPDATE economy SET points=? WHERE twitchId=?", (result[2] - int(ctx.message.content[1]), await getBroadcasterId(ctx.message.content[0])))
+                            await db.commit()
+                            await ctx.send("[bot] took from " + ctx.message.content[0] + " " + ctx.message.content[1] + " basement pesos")
 
     # lists commands available for purchase
     @commands.command()
@@ -342,6 +373,31 @@ class Bot(commands.Bot):
     async def shoot(self, ctx: commands.Context):
         duration = random.randint(10, 60)
         finalId = ""
+
+        # thread to wait to remod a mod after timing them out
+        async def remod(id, duration):
+            await asyncio.sleep(duration)
+
+            modIds = []
+            while str(id) not in modIds:
+                connected = False
+                while not connected:
+
+                    try:
+                        async with aiohttp.ClientSession(headers = {"Client-ID": clientID, "Authorization": "Bearer " + accessToken}) as session:
+                            async with session.get("https://api.twitch.tv/helix/users") as response:
+                                rateLimit = response.headers.get("Ratelimit-Remaining")
+                                if rateLimit != "0":
+                                    await session.post("https://api.twitch.tv/helix/moderation/moderators?broadcaster_id=" + await getBroadcasterId(yourChannelName) + "&user_id=" + id)
+                                    async with session.get("https://api.twitch.tv/helix/moderation/moderators?broadcaster_id=" + await getBroadcasterId(yourChannelName)) as response:
+                                        modIds = []
+                                        for mod in (await response.json()).get("data"):
+                                            modIds.append(str(mod.get("user_id")))
+                                        connected = True
+                                else:
+                                    await asyncio.sleep(5)
+                    except:
+                        await asyncio.sleep(5)
 
         # getting mod ids
         connected = False
@@ -363,38 +419,96 @@ class Bot(commands.Bot):
 
         # if no person named shoot random
         if ctx.message.content == "!shoot":
-            async with databaseLock:
-                # finding user id in database
-                async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
-                    cursor = await db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),))
+            # finding user id in database
+            async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
+                async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
                     result = await cursor.fetchone()
 
-                    # check if user has the money
-                    if result[2] < 1000 and ctx.author.name not in whiteListers:
-                        await ctx.send("[bot] not enough basement pesos")
+                # check if user has the money
+                if result[2] < 1000 and ctx.author.name not in whiteListers:
+                    await ctx.send("[bot] not enough basement pesos")
+                else:
+                    if ctx.author.name not in whiteListers:
+                        await db.execute("UPDATE economy SET points=? WHERE twitchId=?", ((result[2] - 1000), await getBroadcasterId(ctx.author.name)))
+                        await db.commit()
+
+                    connected = False
+                    while not connected:
+                        try:
+                            async with aiohttp.ClientSession() as session:
+                                async with session.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": "Bearer " + accessToken}) as response:
+                                    rateLimit = response.headers.get("Ratelimit-Remaining")
+                                    if rateLimit != "0":
+                                        async with session.get("https://api.twitch.tv/helix/chat/chatters?broadcaster_id=" + await getBroadcasterId(yourChannelName) + "&moderator_id=" + await getBroadcasterId(yourChannelName), headers={"Authorization": f"Bearer {accessToken}", "Client-Id": clientID}) as response:
+                                            chatters_data = await response.json()
+                                            connected = True
+                        except:
+                            await asyncio.sleep(5)
+
+                    names = [[element.get("user_id"), element.get("user_name")] for element in chatters_data.get("data")]
+                    user = names[random.randint(0, len(names) - 1)]
+
+                    # getting item and action
+                    async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
+                        async with db.execute("SELECT item FROM items ORDER BY RANDOM() LIMIT 1") as cursor:
+                            item = str(await cursor.fetchone()).replace("(", "").replace(")", "").replace(",", "")
+                            if item[0] == "\'":
+                                item = item.replace("\'", "")
+                            else:
+                                item = item.replace("\"", "")
+
+                        async with db.execute("SELECT action FROM pastTenseActions ORDER BY RANDOM() LIMIT 1") as cursor:
+                            pastTenseAction = str(await cursor.fetchone()).replace("(", "").replace(")", "").replace(",","")
+                            if pastTenseAction[0] == "\'":
+                                pastTenseAction = pastTenseAction.replace("\'", "")
+                            else:
+                                pastTenseAction = pastTenseAction.replace("\"", "")
+
+                    connected = False
+                    while not connected:
+                        try:
+                            async with aiohttp.ClientSession() as session:
+                                async with session.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": "Bearer " + accessToken}) as response:
+                                    rateLimit = response.headers.get("Ratelimit-Remaining")
+                                    if rateLimit != "0":
+                                        async with session.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + await getBroadcasterId(yourChannelName) + "&moderator_id=" + await getBroadcasterId(yourChannelName), headers={"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json={"data": {"user_id": user[0], "reason": "you got shot", "duration": duration}}) as response:
+                                            await ctx.send("[bot] " + ctx.author.name + " " + pastTenseAction + " " + user[1] + " with " + item)
+                                            connected = True
+                        except:
+                            await asyncio.sleep(5)
+
+                        # setting up remod thread if needed
+                    if user[0] in modIds:
+                        asyncio.create_task(remod(user[0], duration))
+
+        # try to shoot the listed person
+        else:
+            # finding user id in database
+            async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
+                cursor = await db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),))
+                result = await cursor.fetchone()
+
+                # check if the user has the money
+                if result[2] < 1000 and ctx.author.name not in whiteListers:
+                    await ctx.send("[bot] not enough basement pesos")
+                else:
+                    if ctx.author.name not in whiteListers:
+                        await db.execute("UPDATE economy SET points=? WHERE twitchId=?", ((result[2] - 1000), await getBroadcasterId(ctx.author.name)))
+                        await db.commit()
+
+                    dice = random.randint(1, 100)
+                    ctx.message.content = (ctx.message.content).replace("!shoot ", "")
+                    id = await getBroadcasterId(ctx.message.content)
+
+                    # error handling
+                    if id is None:
+                        await ctx.send("[bot] couldn't find user")
+
+                    # shooting based on dice
                     else:
-                        if ctx.author.name not in whiteListers:
-                            await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 1000), await getBroadcasterId(ctx.author.name)))
-                            await db.commit()
-
-                        connected = False
-                        while not connected:
-                            try:
-                                async with aiohttp.ClientSession() as session:
-                                    async with session.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": "Bearer " + accessToken}) as response:
-                                        rateLimit = response.headers.get("Ratelimit-Remaining")
-                                        if rateLimit != "0":
-                                            async with session.get("https://api.twitch.tv/helix/chat/chatters?broadcaster_id=" + await getBroadcasterId(yourChannelName) + "&moderator_id=" + await getBroadcasterId(yourChannelName), headers={"Authorization": f"Bearer {accessToken}", "Client-Id": clientID}) as response:
-                                                chatters_data = await response.json()
-                                                connected = True
-                            except:
-                                await asyncio.sleep(5)
-
-                        names = [[element.get("user_id"), element.get("user_name")] for element in chatters_data.get("data")]
-                        user = names[random.randint(0, len(names) - 1)]
-
-                        # getting item and action
                         async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
+
+                            # getting item and action
                             async with db.execute("SELECT item FROM items ORDER BY RANDOM() LIMIT 1") as cursor:
                                 item = str(await cursor.fetchone()).replace("(", "").replace(")", "").replace(",", "")
                                 if item[0] == "\'":
@@ -403,277 +517,221 @@ class Bot(commands.Bot):
                                     item = item.replace("\"", "")
 
                             async with db.execute("SELECT action FROM pastTenseActions ORDER BY RANDOM() LIMIT 1") as cursor:
-                                pastTenseAction = str(await cursor.fetchone()).replace("(", "").replace(")", "").replace(",","")
+                                pastTenseAction = str(await cursor.fetchone()).replace("(", "").replace(")", "").replace(",", "")
                                 if pastTenseAction[0] == "\'":
                                     pastTenseAction = pastTenseAction.replace("\'", "")
+
+                            async with db.execute("SELECT action FROM presentTenseActions ORDER BY RANDOM() LIMIT 1") as cursor:
+                                presentTenseAction = str(await cursor.fetchone()).replace("(", "").replace(")", "").replace(",", "")
+                                if presentTenseAction[0] == "\'":
+                                    presentTenseAction = presentTenseAction.replace("\'", "")
                                 else:
-                                    pastTenseAction = pastTenseAction.replace("\"", "")
-                        connected = False
-                        while not connected:
-                            try:
-                                async with aiohttp.ClientSession() as session:
-                                    async with session.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": "Bearer " + accessToken}) as response:
-                                        rateLimit = response.headers.get("Ratelimit-Remaining")
-                                        if rateLimit != "0":
-                                            async with session.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + await getBroadcasterId(yourChannelName) + "&moderator_id=" + await getBroadcasterId(yourChannelName), headers={"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json={"data": {"user_id": user[0], "reason": "you got shot", "duration": duration}}) as response:
-                                                await ctx.send("[bot] " + ctx.author.name + " " + pastTenseAction + " " + user[1] + " with " + item)
-                                                connected = True
-                            except:
-                                await asyncio.sleep(5)
+                                    presentTenseAction = presentTenseAction.replace("\"", "")
 
-                        # setting up remod thread if needed
-                        if user[0] in modIds:
-                            asyncio.create_task(self.remod(user[0], duration))
+                        # 10% chance to shoot yourself
+                        if dice > 90:
+                            connected = False
+                            while not connected:
+                                try:
+                                    async with aiohttp.ClientSession() as session:
+                                        async with session.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": "Bearer " + accessToken}) as response:
+                                            rateLimit = response.headers.get("Ratelimit-Remaining")
+                                            if rateLimit != "0":
+                                                async with session.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + await getBroadcasterId(yourChannelName) + "&moderator_id=" + await getBroadcasterId(yourChannelName), headers={"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json={"data": {"user_id": await getBroadcasterId(ctx.author.name), "reason": "you got shot", "duration": duration}}) as response:
+                                                    finalId = await getBroadcasterId(ctx.author.name)
+                                                    await ctx.send("[bot] " + ctx.author.name + " missed and " + item + " bounced into their head")
+                                                    connected = True
+                                except:
+                                    await asyncio.sleep(5)
 
-        # try to shoot the listed person
-        else:
-            async with databaseLock:
-                # finding user id in database
-                async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
-                    cursor = await db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),))
-                    result = await cursor.fetchone()
+                        # 65% chance to shoot random
+                        elif dice > 25:
 
-                    # check if the user has the money
-                    if result[2] < 1000 and ctx.author.name not in whiteListers:
-                        await ctx.send("[bot] not enough basement pesos")
-                    else:
-                        if ctx.author.name not in whiteListers:
-                            await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 1000), await getBroadcasterId(ctx.author.name)))
-                            await db.commit()
+                            connected = False
+                            while not connected:
+                                try:
+                                    async with aiohttp.ClientSession() as session:
+                                        async with session.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": "Bearer " + accessToken}) as response:
+                                            rateLimit = response.headers.get("Ratelimit-Remaining")
+                                            if rateLimit != "0":
+                                                async with session.get("https://api.twitch.tv/helix/chat/chatters?broadcaster_id=" + await getBroadcasterId(yourChannelName) + "&moderator_id=" + await getBroadcasterId(yourChannelName), headers={"Authorization": "Bearer " + accessToken, "Client-Id": clientID}) as response:
+                                                    response = await response.json()
+                                                    connected = True
+                                except:
+                                    await asyncio.sleep(5)
 
-                        dice = random.randint(1, 100)
-                        ctx.message.content = (ctx.message.content).replace("!shoot ", "")
-                        id = await getBroadcasterId(ctx.message.content)
+                            names = [[element.get("user_id"), element.get("user_name")] for element in response.get("data")]
+                            user = names[random.randint(0, len(names) - 1)]
 
-                        # error handling
-                        if id is None:
-                            await ctx.send("[bot] couldn't find user")
+                            connected = False
+                            while not connected:
+                                try:
+                                    async with aiohttp.ClientSession() as session:
+                                        async with session.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": "Bearer " + accessToken}) as response:
+                                            rateLimit = response.headers.get("Ratelimit-Remaining")
+                                            if rateLimit != "0":
+                                                async with session.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + await getBroadcasterId(yourChannelName) + "&moderator_id=" + await getBroadcasterId(yourChannelName), headers={"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json={"data": {"user_id": user[0], "reason": "you got shot", "duration": duration}}) as response:
+                                                    finalId = user[0]
+                                                    await ctx.send("[bot] " + ctx.author.name + " tried to " + presentTenseAction + " " + ctx.message.content + " with " + item + " but they used " + user[1] + " as a shield")
+                                                    connected = True
+                                except:
+                                    await asyncio.sleep(5)
 
-                        # shooting based on dice
+                        # 25% chance to shoot target
                         else:
-                            async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
+                            connected = False
+                            while not connected:
+                                try:
+                                    async with aiohttp.ClientSession() as session:
+                                        async with session.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": "Bearer " + accessToken}) as response:
+                                            rateLimit = response.headers.get("Ratelimit-Remaining")
+                                            if rateLimit != "0":
+                                                async with session.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + await getBroadcasterId(yourChannelName) + "&moderator_id=" + await getBroadcasterId(yourChannelName), headers={"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json={"data": {"user_id": id, "reason": "you got shot", "duration": duration}}) as response:
+                                                    finalId = id
+                                                    await ctx.send("[bot] " + ctx.author.name + " " + pastTenseAction + " " + ctx.message.content + " with " + item)
+                                                    connected = True
+                                            else:
+                                                await asyncio.sleep(5)
+                                except:
+                                    await asyncio.sleep(5)
 
-                                # getting item and action
-                                async with db.execute("SELECT item FROM items ORDER BY RANDOM() LIMIT 1") as cursor:
-                                    item = str(await cursor.fetchone()).replace("(", "").replace(")", "").replace(",", "")
-                                    if item[0] == "\'":
-                                        item = item.replace("\'", "")
-                                    else:
-                                        item = item.replace("\"", "")
-
-                                async with db.execute("SELECT action FROM pastTenseActions ORDER BY RANDOM() LIMIT 1") as cursor:
-                                    pastTenseAction = str(await cursor.fetchone()).replace("(", "").replace(")", "").replace(",", "")
-                                    if pastTenseAction[0] == "\'":
-                                        pastTenseAction = pastTenseAction.replace("\'", "")
-
-                                async with db.execute("SELECT action FROM presentTenseActions ORDER BY RANDOM() LIMIT 1") as cursor:
-                                    presentTenseAction = str(await cursor.fetchone()).replace("(", "").replace(")", "").replace(",", "")
-                                    if presentTenseAction[0] == "\'":
-                                        presentTenseAction = presentTenseAction.replace("\'", "")
-                                    else:
-                                        presentTenseAction = presentTenseAction.replace("\"", "")
-
-                            # 10% chance to shoot yourself
-                            if dice > 90:
-                                connected = False
-                                while not connected:
-                                    try:
-                                        async with aiohttp.ClientSession() as session:
-                                            async with session.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": "Bearer " + accessToken}) as response:
-                                                rateLimit = response.headers.get("Ratelimit-Remaining")
-                                                if rateLimit != "0":
-                                                    async with session.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + await getBroadcasterId(yourChannelName) + "&moderator_id=" + await getBroadcasterId(yourChannelName), headers={"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json={"data": {"user_id": await getBroadcasterId(ctx.author.name), "reason": "you got shot", "duration": duration}}) as response:
-                                                        finalId = await getBroadcasterId(ctx.author.name)
-                                                        await ctx.send("[bot] " + ctx.author.name + " missed and " + item + " bounced into their head")
-                                                        connected = True
-                                    except:
-                                        await asyncio.sleep(5)
-
-                            # 65% chance to shoot random
-                            elif dice > 25:
-
-                                connected = False
-                                while not connected:
-                                    try:
-                                        async with aiohttp.ClientSession() as session:
-                                            async with session.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": "Bearer " + accessToken}) as response:
-                                                rateLimit = response.headers.get("Ratelimit-Remaining")
-                                                if rateLimit != "0":
-                                                    async with session.get("https://api.twitch.tv/helix/chat/chatters?broadcaster_id=" + await getBroadcasterId(yourChannelName) + "&moderator_id=" + await getBroadcasterId(yourChannelName), headers={"Authorization": "Bearer " + accessToken, "Client-Id": clientID}) as response:
-                                                        response = await response.json()
-                                                        connected = True
-                                    except:
-                                        await asyncio.sleep(5)
-
-                                names = [[element.get("user_id"), element.get("user_name")] for element in response.get("data")]
-                                user = names[random.randint(0, len(names) - 1)]
-
-                                connected = False
-                                while not connected:
-                                    try:
-                                        async with aiohttp.ClientSession() as session:
-                                            async with session.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": "Bearer " + accessToken}) as response:
-                                                rateLimit = response.headers.get("Ratelimit-Remaining")
-                                                if rateLimit != "0":
-                                                    async with session.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + await getBroadcasterId(yourChannelName) + "&moderator_id=" + await getBroadcasterId(yourChannelName), headers={"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json={"data": {"user_id": user[0], "reason": "you got shot", "duration": duration}}) as response:
-                                                        finalId = user[0]
-                                                        await ctx.send("[bot] " + ctx.author.name + " tried to " + presentTenseAction + " " + ctx.message.content + " with " + item + " but they used " + user[1] + " as a shield")
-                                                        connected = True
-                                    except:
-                                        await asyncio.sleep(5)
-
-                            # 25% chance to shoot target
-                            else:
-                                connected = False
-                                while not connected:
-                                    try:
-                                        async with aiohttp.ClientSession() as session:
-                                            async with session.get("https://api.twitch.tv/helix/users", headers={"Client-ID": clientID, "Authorization": "Bearer " + accessToken}) as response:
-                                                rateLimit = response.headers.get("Ratelimit-Remaining")
-                                                if rateLimit != "0":
-                                                    async with session.post("https://api.twitch.tv/helix/moderation/bans?broadcaster_id=" + await getBroadcasterId(yourChannelName) + "&moderator_id=" + await getBroadcasterId(yourChannelName), headers={"Authorization": "Bearer " + accessToken, "Client-Id": clientID, "Content-Type": "application/json"}, json={"data": {"user_id": id, "reason": "you got shot", "duration": duration}}) as response:
-                                                        finalId = id
-                                                        await ctx.send("[bot] " + ctx.author.name + " " + pastTenseAction + " " + ctx.message.content + " with " + item)
-                                                        connected = True
-                                                else:
-                                                    await asyncio.sleep(5)
-                                    except Exception as e:
-                                        print(e)
-                                        await asyncio.sleep(5)
-
-                            if finalId in modIds:
-                                print("started remod thread")
-                                asyncio.create_task(self.remod(finalId, duration))
+                        if finalId in modIds:
+                            asyncio.create_task(remod(finalId, duration))
 
     # disables input bot for 35 to 95 minutes
     @commands.command()
     async def shootSnack(self, ctx: commands.Context):
 
-        async with databaseLock:
+        # thread to wait to restart input bot
+        async def snackWait():
+            await asyncio.sleep(random.randint(2100, 5700))
+            chatPlays.snackShot = False
+            chatPlays.snackHealed = False
+            await updateSnatus()
 
-            # finding user id in database
-            async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                cursor = await db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),))
+        # finding user id in database
+        async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
+            async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
                 result = await cursor.fetchone()
 
-                # check if user has the money
-                if result[2] < 800 and ctx.author.name not in whiteListers:
-                    await ctx.send("[bot] not enough basement pesos")
+            # check if user has the money
+            if result[2] < 800 and ctx.author.name not in whiteListers:
+                await ctx.send("[bot] not enough basement pesos")
+            else:
+                if ctx.author.name not in whiteListers:
+                    await db.execute("UPDATE economy SET points=? WHERE twitchId=?", ((result[2] - 800), await getBroadcasterId(ctx.author.name)))
+                    await db.commit()
+
+                # getting random action and item
+                async with db.execute("SELECT item FROM items ORDER BY RANDOM() LIMIT 1") as cursor:
+                    item = await cursor.fetchone()
+
+                item = str(item).replace("(", "").replace(")", "").replace(",", "")
+                if item[0] == "\'":
+                    item = item.replace("\'", "")
                 else:
-                    if ctx.author.name not in whiteListers:
-                        await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 800), await getBroadcasterId(ctx.author.name)))
-                        await db.commit()
+                    item = item.replace("\"", "")
 
-                    # getting random action and item
-                    async with db.execute("SELECT item FROM items ORDER BY RANDOM() LIMIT 1") as cursor:
-                        item = await cursor.fetchone()
+                async with db.execute("SELECT action FROM pastTenseActions ORDER BY RANDOM() LIMIT 1") as cursor:
+                    action = await cursor.fetchone()
 
-                    item = str(item).replace("(", "").replace(")", "").replace(",", "")
-                    if item[0] == "\'":
-                        item = item.replace("\'", "")
-                    else:
-                        item = item.replace("\"", "")
+                action = str(action).replace("(", "").replace(")", "").replace(",", "")
+                if action[0] == "\'":
+                    action = action.replace("\'", "")
+                else:
+                    action = action.replace("\"", "")
 
-                    async with db.execute("SELECT action FROM pastTenseActions ORDER BY RANDOM() LIMIT 1") as cursor:
-                        action = await cursor.fetchone()
-
-                    action = str(action).replace("(", "").replace(")", "").replace(",", "")
-                    if action[0] == "\'":
-                        action = action.replace("\'", "")
-                    else:
-                        action = action.replace("\"", "")
-
-                    # disabling input bot
-                    chatPlays.snackShot = True
-                    chatPlays.snackHealed = False
-                    await ctx.send("[bot] " + ctx.author.name + " " + action + " " + chatPlays.currentSnack + " snack with " + item)
-                    if not chatPlays.idleBotStatus:
-                        await updateSnatus()
-                    asyncio.create_task(self.snackWait())
+                # disabling input bot
+                chatPlays.snackShot = True
+                chatPlays.snackHealed = False
+                await ctx.send("[bot] " + ctx.author.name + " " + action + " " + chatPlays.currentSnack + " snack with " + item)
+                if not chatPlays.idleBotStatus:
+                    await updateSnatus()
+                asyncio.create_task(snackWait())
 
     # reactivates input bot
     @commands.command()
     async def healSnack(self, ctx: commands.Context):
-        async with databaseLock:
 
-            # finding user id in database
-            db_path = os.path.abspath((os.path.join(directory, "chatData.db")))
-            async with aiosqlite.connect(db_path) as db:
-                cursor = await db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),))
+        async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
+            async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
                 result = await cursor.fetchone()
 
-                # check if user has the money
-                if result[2] < 500 and ctx.author.name not in whiteListers:
-                    await ctx.send("[bot] not enough basement pesos")
+            # check if user has the money
+            if result[2] < 500 and ctx.author.name not in whiteListers:
+                await ctx.send("[bot] not enough basement pesos")
+            else:
+                if ctx.author.name not in whiteListers:
+                    await db.execute("UPDATE economy SET points=? WHERE twitchId=?", ((result[2] - 500), await getBroadcasterId(ctx.author.name)))
+                    await db.commit()
+
+                # getting random item
+                async with db.execute("SELECT item FROM items ORDER BY RANDOM() LIMIT 1") as cursor:
+                    item = await cursor.fetchone()
+
+                item = str(item).replace("(", "").replace(")", "").replace(",", "")
+                if item[0] == "\'":
+                    item = item.replace("\'", "")
                 else:
-                    if ctx.author.name not in whiteListers:
-                        await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 500), await getBroadcasterId(ctx.author.name)))
-                        await db.commit()
+                    item = item.replace("\"", "")
 
-                    # getting random item
-                    async with db.execute("SELECT item FROM items ORDER BY RANDOM() LIMIT 1") as cursor:
-                        item = await cursor.fetchone()
-
-                    item = str(item).replace("(", "").replace(")", "").replace(",", "")
-                    if item[0] == "\'":
-                        item = item.replace("\'", "")
-                    else:
-                        item = item.replace("\"", "")
-
-                    # enabling bot
-                    dice = random.randint(1, 100)
-                    if chatPlays.snackShot and dice < 56:
-                        chatPlays.snackHealed = True
-                        if not chatPlays.idleBotStatus:
-                            await updateSnatus()
-                        await ctx.send("[bot] " + ctx.author.name + " healed " + chatPlays.currentSnack + " snack with " + item)
-                    else:
-                        await ctx.send("[bot] " + ctx.author.name + " failed to heal " + chatPlays.currentSnack + " snack with " + item)
+                # enabling bot
+                dice = random.randint(1, 100)
+                if chatPlays.snackShot and dice < 56:
+                    chatPlays.snackHealed = True
+                    if not chatPlays.idleBotStatus:
+                        await updateSnatus()
+                    await ctx.send("[bot] " + ctx.author.name + " healed " + chatPlays.currentSnack + " snack with " + item)
+                else:
+                    await ctx.send("[bot] " + ctx.author.name + " failed to heal " + chatPlays.currentSnack + " snack with " + item)
 
     # changes input bot type
     @commands.command()
     async def swapSnack(self, ctx: commands.Context):
-        async with databaseLock:
 
-            # finding user id in database
-            async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                cursor = await db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),))
+        # finding user id in database
+        async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
+            async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
                 result = await cursor.fetchone()
 
-                # check if the user has enough money
-                if result[2] < 150 and ctx.author.name not in whiteListers:
-                    await ctx.send("[bot] not enough basement pesos")
-                else:
-                    if ctx.author.name not in whiteListers:
-                        await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 150), await getBroadcasterId(ctx.author.name)))
-                        await db.commit()
+            # check if the user has enough money
+            if result[2] < 150 and ctx.author.name not in whiteListers:
+                await ctx.send("[bot] not enough basement pesos")
+            else:
+                if ctx.author.name not in whiteListers:
+                    await db.execute("UPDATE economy SET points=? WHERE twitchId=?", ((result[2] - 150), await getBroadcasterId(ctx.author.name)))
+                    await db.commit()
 
-                    chatPlays.currentSnack = snacks[random.randint(0, len(snacks) - 1)]
-                    await ctx.send("[bot] " + chatPlays.currentSnack + " snack was swapped in")
-                    if not chatPlays.idleBotStatus:
-                        await updateSnatus()
+                chatPlays.currentSnack = snacks[random.randint(0, len(snacks) - 1)]
+                await ctx.send("[bot] " + chatPlays.currentSnack + " snack was swapped in")
+                if not chatPlays.idleBotStatus:
+                    await updateSnatus()
 
     # disables landmines for ten to fifteen minutes
     @commands.command()
     async def emp(self, ctx: commands.Context):
-        async with databaseLock:
 
-            # finding user id in database
-            async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                cursor = await db.execute("SELECT * FROM economy WHERE id=?", (await getBroadcasterId(ctx.author.name),))
+        # thread to wait to restart input bot
+        async def empWait():
+            await asyncio.sleep(random.randint(600, 900))
+            chatPlays.landminesActive = True
+
+        # finding user id in database
+        async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
+            async with db.execute("SELECT * FROM economy WHERE twitchId=?", (await getBroadcasterId(ctx.author.name),)) as cursor:
                 result = await cursor.fetchone()
 
-                # check if user has the money
-                if result[2] < 150 and ctx.author.name not in whiteListers:
-                    await ctx.send("[bot] not enough basement pesos")
-                else:
-                    if ctx.author.name not in whiteListers:
-                        await db.execute("UPDATE economy SET points=? WHERE id=?", ((result[2] - 150), await getBroadcasterId(ctx.author.name)))
-                        await db.commit()
+            # check if user has the money
+            if result[2] < 150 and ctx.author.name not in whiteListers:
+                await ctx.send("[bot] not enough basement pesos")
+            else:
+                if ctx.author.name not in whiteListers:
+                    await db.execute("UPDATE economy SET points=? WHERE twitchId=?", ((result[2] - 150), await getBroadcasterId(ctx.author.name)))
+                    await db.commit()
 
-                    chatPlays.landminesActive = False
-                    await ctx.send("[bot] " + ctx.author.name + " deactivated landmines")
-                    asyncio.create_task(self.empWait())
+                chatPlays.landminesActive = False
+                await ctx.send("[bot] " + ctx.author.name + " deactivated landmines")
+                asyncio.create_task(empWait())
 
     # as soon as bot is logged in constantly check the array and update watch time and points
     async def updateWatchTime(self):
@@ -694,58 +752,24 @@ class Bot(commands.Bot):
                     firstRedeemed = False
 
                 # update database for all users in chat
-                async with databaseLock:
-                    for chatter in chatters:
-                        async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
-                            async with db.execute("SELECT * FROM economy WHERE id=?", (chatter[0],)) as cursor:
-                                result = await cursor.fetchone()
+                for chatter in chatters:
+                    async with aiosqlite.connect(os.path.abspath((os.path.join(directory, "chatData.db")))) as db:
+                        async with db.execute("SELECT * FROM economy WHERE twitchId=?", (chatter[0],)) as cursor:
+                            result = await cursor.fetchone()
 
-                                # setting points and watchtime
-                                if result:
-                                    if (time.time() - chatter[2]) >= 300:
-                                        await db.execute("UPDATE economy SET points=? WHERE id=?", (result[2] + 10, chatter[0]))
-                                        chatter[2] = time.time()
+                    # setting points and watchtime
+                    if result:
+                        if (time.time() - chatter[2]) >= 300:
+                            await db.execute("UPDATE economy SET points=? WHERE twitchId=?", (result[2] + 10, chatter[0]))
+                            chatter[2] = time.time()
 
-                                    await db.execute("UPDATE economy SET watchtime=? WHERE id=?", (float(result[1]) + (time.time() - chatter[1]), chatter[0]))
-                                    chatter[1] = time.time()
+                        await db.execute("UPDATE economy SET watchtime=? WHERE twitchId=?", (float(result[1]) + (time.time() - chatter[1]), chatter[0]))
+                        chatter[1] = time.time()
 
-                                    await db.commit()
+                        await db.commit()
+
             else:
                 live = False
 
-    # thread to wait to restart input bot
-    async def snackWait(self):
-        await asyncio.sleep(random.randint(2100, 5700))
-        chatPlays.snackShot = False
-        chatPlays.snackHealed = False
-        await updateSnatus()
-
-    # thread to wait to restart input bot
-    async def empWait(self):
-        await asyncio.sleep(random.randint(600, 900))
-        chatPlays.landminesActive = True
-
-    # thread to wait to remod a mod after timing them out
-    async def remod(self, id, duration):
-        await asyncio.sleep(duration)
-
-        modIds = []
-        while str(id) not in modIds:
-            connected = False
-            while not connected:
-
-                try:
-                    async with aiohttp.ClientSession(headers = {"Client-ID": clientID, "Authorization": "Bearer " + accessToken}) as session:
-                        async with session.get("https://api.twitch.tv/helix/users") as response:
-                            rateLimit = response.headers.get("Ratelimit-Remaining")
-                            if rateLimit != "0":
-                                await session.post("https://api.twitch.tv/helix/moderation/moderators?broadcaster_id=" + await getBroadcasterId(yourChannelName) + "&user_id=" + id)
-                                async with session.get("https://api.twitch.tv/helix/moderation/moderators?broadcaster_id=" + await getBroadcasterId(yourChannelName)) as response:
-                                    modIds = []
-                                    for mod in (await response.json()).get("data"):
-                                        modIds.append(str(mod.get("user_id")))
-                                    connected = True
-                            else:
-                                await asyncio.sleep(5)
-                except:
-                    await asyncio.sleep(5)
+# starting bot
+Bot().run()

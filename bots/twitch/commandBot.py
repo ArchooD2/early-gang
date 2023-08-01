@@ -1,12 +1,18 @@
 # responds to basic commands in chat
 # don't fuck with this too much unless you're familiar with twitchio and how it works
 # not much documentation here because even i don't know what the fuck this object oriented programming is doing in python
-import base64
+
+# changing system path
+import sys
+sys.path.insert(0, sys.path[0].replace("bots\\twitch", ""))
+
 # imports
 from urllib.parse import urlencode
-from bots.twitch.econBot import *
 import aiosqlite
+from twitchio.ext import commands
+import base64
 from libraries.chatPlays import *
+import requests
 
 # reading config
 config = configparser.ConfigParser()
@@ -64,10 +70,8 @@ class Bot(commands.Bot):
             chatPlays.timeSinceLastMessage = time.time()
 
         # reading database
-        async with databaseLock:
-            async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
-                cursor = await db.cursor()
-                await cursor.execute("SELECT * FROM chatters WHERE id = ?", (await getBroadcasterId(message.author.name),))
+        async with aiosqlite.connect(os.path.abspath(os.path.join(directory, "chatData.db"))) as db:
+            async with db.execute("SELECT * FROM chatters WHERE id = ?", (await getBroadcasterId(message.author.name),)) as cursor:
                 result = await cursor.fetchone()
 
                 # sending welcome message if id isn't in database
@@ -173,3 +177,6 @@ class Bot(commands.Bot):
                             await ctx.send("[bot] no song playing")
                     else:
                         await ctx.send("[bot] can't get song")
+
+# starting bot
+Bot().run()

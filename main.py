@@ -1,13 +1,14 @@
-
 # imports
-from bots.twitch import pollBot, commandBot, econBot
-from bots.discord import gwrbullBot, ramcicleBot, sna1lBot, fizzyghostBot, birdmanBot, discordCommandBot
 from libraries.charityDonoTTS import *
 from libraries.chatPlays import *
 from libraries.autoStream import *
 
 # main code loop
 async def main():
+
+    # setting up
+    await connectToObs()
+    await chatPlays.updateSnatus()
 
     # so you don't have to restart stream
     if await isLive(yourChannelName):
@@ -56,16 +57,15 @@ async def main():
                 await startIdleBot()
             if not inputBotPlaying:
                 await startInputBot()
+
         await asyncio.sleep(3)
 
-# run main and all your other background tasks here
-async def setup():
-    await asyncio.gather(connectToObs(), chatPlays.updateSnatus(), pollBot.Bot().start(), commandBot.Bot().start(), econBot.Bot().start(), discordCommandBot.bot.start(discordCommandBot.commandBotToken), gwrbullBot.bot.start(gwrbullBot.gwrbullBotToken), ramcicleBot.bot.start(ramcicleBot.ramcicleBotToken), sna1lBot.bot.start(sna1lBot.sna1lBotToken), birdmanBot.bot.start(birdmanBot.birdmanBotToken), fizzyghostBot.bot.start(fizzyghostBot.fizzyghostBotToken), asyncio.create_task(main()))
 
 # don't touch this
 try:
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(setup())
+    loop.run_until_complete(main())
     loop.run_forever()
 except Exception as e:
     print(e)
+

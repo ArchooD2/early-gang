@@ -2,8 +2,11 @@
 # don't fuck with this too much unless you're familiar with twitchio and how it works
 # not much documentation here because even i don't know what the fuck this object oriented programming is doing in python
 
+# changing system path
+import sys
+sys.path.insert(0, sys.path[0].replace("bots\\twitch", ""))
+
 # imports
-import asyncio
 from twitchio.ext import commands
 from libraries.autoStream import *
 
@@ -174,3 +177,6 @@ class Bot(commands.Bot):
 
                 # sending poll results
                 await ctx.send("[bot] " + "\"" + pollName + "\"" + " results: " + results)
+
+# starting bot
+Bot().run()

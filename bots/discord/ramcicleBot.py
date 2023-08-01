@@ -1,61 +1,48 @@
 # times out ramcicle every time he speaks
 
+# changing system path
+import sys
+sys.path.insert(0, sys.path[0].replace("bots\\discord", ""))
+
 # imports
 import discord
-import asyncio
 from libraries.autoStream import *
-import threading
-
-# getting the bot token
-config = configparser.ConfigParser()
-config.read(os.path.abspath((os.path.join(directory, "config.ini"))))
-ramcicleBotToken = config.get("discord", "ramcicle bot token")
 
 # setting the bot up
-intents = discord.Intents.default()
-intents.guilds = True
-intents.messages = True
-intents.members = True
-bot = discord.Client(intents = intents)
+config = configparser.ConfigParser()
+config.read(os.path.abspath((os.path.join(directory, "config.ini"))))
+token = config.get("discord", "ramcicle bot token")
+bot = discord.Client(intents = discord.Intents.all())
 
 @bot.event
 async def on_message(message):
     if message.author.id == 232162258229264384:
 
-        # getting server info
-        guild = bot.guilds[0]
-        channels = guild.channels
-        permissions = discord.PermissionOverwrite()
-
-        # setting permissions for all channels
-        permissions.send_messages = False
-        tasks = []
-        for channel in channels:
-            if isinstance(channel, discord.TextChannel):
-                task = setChannelPermissions(channel, message.author, permissions)
+        # timing out
+        try:
+            tasks = []
+            for channel in bot.guilds[0].channels:
+                task = channel.set_permissions(bot.guilds[0].get_member(232162258229264384), send_messages = False, send_messages_in_threads = False)
                 tasks.append(task)
-        await asyncio.gather(*tasks)
+            await asyncio.gather(*tasks)
+        except:
+            await asyncio.sleep(0)
 
         # waiting
         await asyncio.sleep(3)
 
-        # resetting permissions for all channels
-        permissions.send_messages = True
-        tasks = []
-        for channel in channels:
-            if isinstance(channel, discord.TextChannel):
-                task = setChannelPermissions(channel, message.author, permissions)
+        # untiming out
+        try:
+            tasks = []
+            for channel in bot.guilds[0].channels:
+                task = channel.set_permissions(bot.guilds[0].get_member(232162258229264384), send_messages = True, send_messages_in_threads = True)
                 tasks.append(task)
-        await asyncio.gather(*tasks)
+            await asyncio.gather(*tasks)
+        except:
+            await asyncio.sleep(0)
 
     # telling the bot what to do
     await bot.process_commands(message)
 
-# for timing out in all channels at the same time
-async def setChannelPermissions(channel, user, permissions):
-
-    # """""error handling""""" in case bot can't access all channels
-    try:
-        await channel.set_permissions(user, overwrite=permissions)
-    except:
-        await asyncio.sleep(0)
+# starting bot
+bot.run(token)

@@ -1,5 +1,9 @@
 # sends sna1l_boy new code every day and times him out until he solves it
 
+# changing system path
+import sys
+sys.path.insert(0, sys.path[0].replace("bots\\discord", ""))
+
 # imports
 import discord
 from libraries.autoStream import *
@@ -10,31 +14,17 @@ import aiofile
 # getting the bot token
 config = configparser.ConfigParser()
 config.read(os.path.abspath((os.path.join(directory, "config.ini"))))
-sna1lBotToken = config.get("discord", "sna1l bot token")
+token = config.get("discord", "sna1l bot token")
 bot = discord.Client(intents = discord.Intents.all())
-
-# setting the bot up
-intents = discord.Intents.default()
-intents.dm_messages = True
-intents.members = True
-intents.message_content = True
-intents.guilds = True
-bot = discord.Client(intents = intents)
 
 # setting up variables
 waitingForAnswer = False
-guild = None
-channels = None
 codeFile = None
 strikes = None
-permissions = discord.PermissionOverwrite()
 
 @bot.event
 async def on_ready():
     global waitingForAnswer
-    global permissions
-    global channels
-    global guild
     global codeFile
     global strikes
 
@@ -45,18 +35,17 @@ async def on_ready():
 
         strikes = 1
         waitingForAnswer = True
-        guild = bot.guilds[0]
-        channels = guild.channels
         codeFile = random.choice([file for file in os.listdir(os.path.join(directory, "sna1lCodeSamples", "incorrect")) if os.path.isfile(os.path.join(directory, "sna1lCodeSamples", "incorrect", file))])
 
-        # timing out user
-        permissions.send_messages = False
-        tasks = []
-        for channel in channels:
-            if isinstance(channel, discord.TextChannel):
-                task = setChannelPermissions(channel, bot.get_user(1065034277756080158), permissions)
+        # timing out
+        try:
+            tasks = []
+            for channel in bot.guilds[0].channels:
+                task = channel.set_permissions(bot.guilds[0].get_member(1065034277756080158), send_messages = False, send_messages_in_threads = False)
                 tasks.append(task)
-        await asyncio.gather(*tasks)
+            await asyncio.gather(*tasks)
+        except:
+            await asyncio.sleep(0)
 
         # sends python file
         if bot.get_user(1065034277756080158) and codeFile:
@@ -68,8 +57,6 @@ async def on_ready():
 @bot.event
 async def on_message(message):
     global waitingForAnswer
-    global permissions
-    global channels
     global strikes
 
     if message.author.id == 1065034277756080158 and isinstance(message.channel, discord.DMChannel) and waitingForAnswer:
@@ -91,13 +78,14 @@ async def on_message(message):
                 waitingForAnswer = False
 
                 # untiming out
-                permissions.send_messages = True
-                tasks = []
-                for channel in channels:
-                    if isinstance(channel, discord.TextChannel):
-                        task = setChannelPermissions(channel, message.author, permissions)
+                try:
+                    tasks = []
+                    for channel in bot.guilds[0].channels:
+                        task = channel.set_permissions(bot.guilds[0].get_member(1065034277756080158), send_messages = True, send_messages_in_threads = True)
                         tasks.append(task)
-                await asyncio.gather(*tasks)
+                    await asyncio.gather(*tasks)
+                except:
+                    await asyncio.sleep(0)
 
                 await bot.get_user(1065034277756080158).send("well done")
 
@@ -111,12 +99,5 @@ async def on_message(message):
                     await bot.get_user(1065034277756080158).send("strike " + str(strikes))
                     strikes += 1
 
-
-# for timing out in all channels at the same time
-async def setChannelPermissions(channel, user, permissions):
-
-    # """""error handling""""" in case bot can't access all channels
-    try:
-        await channel.set_permissions(user, overwrite=permissions)
-    except:
-        await asyncio.sleep(0)
+# starting bot
+bot.run(token)

@@ -1,20 +1,19 @@
-# ghost pings (pun not intended) fizzygohst in a random channel every 2-10 hours
-import random
+# ghost pings (pun not intended) fizzyghost in a random channel every 2-10 hours
+
+# changing system path
+import sys
+sys.path.insert(0, sys.path[0].replace("bots\\discord", ""))
 
 # imports
+import random
 import discord
 from libraries.autoStream import *
 
-# getting the bot token
+# setting the bot up
 config = configparser.ConfigParser()
 config.read(os.path.abspath((os.path.join(directory, "config.ini"))))
-fizzyghostBotToken = config.get("discord", "fizzyghost bot token")
-
-# setting the bot up
-intents = discord.Intents.default()
-intents.members = True
-intents.message_content = True
-bot = discord.Client(intents = intents)
+token = config.get("discord", "fizzyghost bot token")
+bot = discord.Client(intents = discord.Intents.all())
 
 # pinging every two to ten hours
 @bot.event
