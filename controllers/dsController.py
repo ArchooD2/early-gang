@@ -130,47 +130,47 @@ async def inputBot():
             elif chatPlays.currentSnack == "chris":
                 
                 # time between inputs
-                await asyncio.sleep(random.randint(10, 120))
+                await asyncio.sleep(random.uniform(10, 120))
 
-                # 33% chance of no action
-                dice = random.randint(1, 3)
-                if dice != 1:
-                    dice = random.randint(1, 17)
-                    match dice:
-                        case 1:
-                            await gbaController.up(botPressTime)
-                        case 2:
-                            await gbaController.down(botPressTime)
-                        case 3:
-                            await gbaController.left(botPressTime)
-                        case 4:
-                            await gbaController.right(botPressTime)
-                        case 5:
-                            await gbaController.holdUp(botHoldTime)
-                        case 6:
-                            await gbaController.holdDown(botHoldTime)
-                        case 7:
-                            await gbaController.holdLeft(botHoldTime)
-                        case 8:
-                            await gbaController.holdDown(botHoldTime)
-                        case 9:
-                            await gbaController.a(botPressTime)
-                        case 10:
-                            await gbaController.holdA(botHoldTime)
-                        case 11:
-                            await gbaController.b(botPressTime)
-                        case 12:
-                            await gbaController.holdB()
-                        case 13:
-                            await x(botPressTime)
-                        case 14:
-                            await y(botPressTime)
-                        case 15:
-                            await l(botPressTime)
-                        case 16:
-                            await r(botPressTime)
-                        case 17:
-                            await gbaController.wander(2, botHoldTime)
+                # 1/18 chance of all outcomes, including nothing (true random)
+                dice = random.randint(1, 18)
+                match dice:
+                    case 1:
+                        await gbaController.up(botPressTime)
+                    case 2:
+                        await gbaController.down(botPressTime)
+                    case 3:
+                        await gbaController.left(botPressTime)
+                    case 4:
+                        await gbaController.right(botPressTime)
+                    case 5:
+                        await gbaController.holdUp(botHoldTime)
+                    case 6:
+                        await gbaController.holdDown(botHoldTime)
+                    case 7:
+                        await gbaController.holdLeft(botHoldTime)
+                    case 8:
+                        await gbaController.holdDown(botHoldTime)
+                    case 9:
+                        await gbaController.a(botPressTime)
+                    case 10:
+                        await gbaController.holdA(botHoldTime)
+                    case 11:
+                        await gbaController.b(botPressTime)
+                    case 12:
+                        await gbaController.holdB()
+                    case 13:
+                        await x(botPressTime)
+                    case 14:
+                        await y(botPressTime)
+                    case 15:
+                        await l(botPressTime)
+                    case 16:
+                        await r(botPressTime)
+                    case 17:
+                        await gbaController.wander(2, botHoldTime)
+                    case 18:
+                        await time.sleep(0)
                         
             # burst snack controls
             elif chatPlays.currentSnack == "burst":
@@ -225,8 +225,8 @@ async def inputBot():
                 # time between inputs
                 await asyncio.sleep(random.randint(10, 80))
 
-                # 33% chance of no action
-                dice = random.randint(1, 3)
+                # 25% chance of no action
+                dice = random.randint(1, 4)
                 if dice != 1:
                     dice = random.randint(1, 9)
                     match dice:
@@ -261,13 +261,13 @@ async def inputBot():
                     dice = random.randint(1, 6)
                     match dice:
                         case 1:
-                            await gbaController.slightUp(lightPressTime)
+                            await gbaController.north(lightPressTime)
                         case 2:
-                            await gbaController.slightDown(lightPressTime)
+                            await gbaController.south(lightPressTime)
                         case 3:
-                            await gbaController.slightRight(lightPressTime)
+                            await gbaController.east(lightPressTime)
                         case 4:
-                            await gbaController.slightLeft(lightPressTime)
+                            await gbaController.west(lightPressTime)
                         case 5:
                             await gbaController.b(botPressTime)
                         case 6:
@@ -285,13 +285,13 @@ async def inputBot():
                     dice = random.randint(1, 6)
                     match dice:
                         case 1:
-                            await gbaController.slightRight(lightPressTime)
+                            await gbaController.north(lightPressTime)
                         case 2:
-                            await gbaController.slightLeft(lightPressTime)
+                            await gbaController.south(lightPressTime)
                         case 3:
-                            await gbaController.slightUp(lightPressTime)
+                            await gbaController.east(lightPressTime)
                         case 4:
-                            await gbaController.slightDown(lightPressTime)
+                            await gbaController.west(lightPressTime)
                         case 5:
                             await gbaController.mashA(botPressTime)
                         case 6:
@@ -311,8 +311,6 @@ async def inputBot():
 
 # chat controls
 async def controller(message):
-
-    print("making input")
     # makes sure chat is playing
     if chatPlays.chatPlaying is True:
 
@@ -342,7 +340,7 @@ async def controller(message):
         try:
 
             # 10% chance of input
-            if int(streamResponse.get("data")[0].get("viewer_count")) > 100:
+            if int(streamResponse.get("data")[0].get("viewer_count")) > 125:
                 if dice <= 10:
                     input = True
 
@@ -378,7 +376,7 @@ async def controller(message):
             dice = random.randint(1, 40)
 
             # 2.5% chance of random input
-            if dice == 1 and (message == "a" or "shoot" in message or "left+" in message or "right+" in message or "down+" in message or "up+" in message or "hold a" in message or "mash a" in message or message == "b" or "hold b" in message or "mash b" in message or message == "x" or message == "y" or "select" in message or "start" in message or message == "l" or message == "r" or "up wander" in message or "down wander" in message or "left wander" in message or "right wander" in message or "wander" in message or "hold up" in message or "hold down" in message or "hold left" in message or "hold right" in message or "slup" in message or "slown" in message or "sleft" in message or "slight" in message or "up" in message or "down" in message or "left" in message or "right" in message or "stop" in message or landmines[0] in message or landmines[1] in message or landmines[2] in message or landmines[3] in message or landmines[4] in message):
+            if dice == 1 and (message == "a" or "shoot" in message or "left+" in message or "right+" in message or "down+" in message or "up+" in message or "hold a" in message or "mash a" in message or message == "b" or "hold b" in message or "mash b" in message or message == "x" or message == "y" or "select" in message or "start" in message or message == "l" or message == "r" or "up wander" in message or "down wander" in message or "left wander" in message or "right wander" in message or "wander" in message or "hold up" in message or "hold down" in message or "hold left" in message or "hold right" in message or "north" in message or "south" in message or "west" in message or "east" in message or "up" in message or "down" in message or "left" in message or "right" in message or "stop" in message or landmines[0] in message or landmines[1] in message or landmines[2] in message or landmines[3] in message or landmines[4] in message):
                 dice = random.randint(1, 34)
                 match dice:
                     case 1:
@@ -426,13 +424,13 @@ async def controller(message):
                     case 22:
                         await gbaController.wander(4, holdTime)
                     case 23:
-                        await gbaController.slightDown(lightPressTime)
+                        await gbaController.north(lightPressTime)
                     case 24:
-                        await gbaController.slightUp(lightPressTime)
+                        await gbaController.south(lightPressTime)
                     case 25:
-                        await gbaController.slightLeft(lightPressTime)
+                        await gbaController.west(lightPressTime)
                     case 26:
-                        await gbaController.slightRight(lightPressTime)
+                        await gbaController.east(lightPressTime)
                     case 27:
                         await gbaController.upWander(holdTime)
                     case 28:
@@ -493,14 +491,14 @@ async def controller(message):
                     await gbaController.holdRight(holdTime)
                 elif "hold right" in message:
                     await gbaController.holdLeft(holdTime)
-                elif "slup" in message:
-                    await gbaController.slightDown(lightPressTime)
-                elif "slown" in message:
-                    await gbaController.slightUp(lightPressTime)
-                elif "sleft" in message:
-                    await gbaController.slightRight(lightPressTime)
-                elif "slight" in message:
-                    await gbaController.slightLeft(lightPressTime)
+                elif "north" in message:
+                    await gbaController.south(lightPressTime)
+                elif "south" in message:
+                    await gbaController.north(lightPressTime)
+                elif "west" in message:
+                    await gbaController.east(lightPressTime)
+                elif "east" in message:
+                    await gbaController.west(lightPressTime)
                 elif "up+" in message:
                     await downPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
                 elif "down+" in message:
@@ -570,14 +568,14 @@ async def controller(message):
                     await gbaController.holdLeft(holdTime)
                 elif "hold right" in message:
                     await gbaController.holdRight(holdTime)
-                elif "slup" in message:
-                    await gbaController.slightUp(lightPressTime)
-                elif "slown" in message:
-                    await gbaController.slightDown(lightPressTime)
-                elif "sleft" in message:
-                    await gbaController.slightLeft(lightPressTime)
-                elif "slight" in message:
-                    await gbaController.slightRight(lightPressTime)
+                elif "north" in message:
+                    await gbaController.north(lightPressTime)
+                elif "south" in message:
+                    await gbaController.south(lightPressTime)
+                elif "west" in message:
+                    await gbaController.west(lightPressTime)
+                elif "east" in message:
+                    await gbaController.east(lightPressTime)
                 elif "up+" in message:
                     await upPlus(slightlyDifferentHoldTimeForWhateverFuckingReason)
                 elif "down+" in message:
