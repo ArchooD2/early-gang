@@ -132,45 +132,45 @@ async def inputBot():
                 # time between inputs
                 await asyncio.sleep(random.randint(10, 120))
 
-                # 33% chance of no action
-                dice = random.randint(1, 3)
-                if dice != 1:
-                    dice = random.randint(1, 17)
-                    match dice:
-                        case 1:
-                            await gbaController.up(botPressTime)
-                        case 2:
-                            await gbaController.down(botPressTime)
-                        case 3:
-                            await gbaController.left(botPressTime)
-                        case 4:
-                            await gbaController.right(botPressTime)
-                        case 5:
-                            await gbaController.holdUp(botHoldTime)
-                        case 6:
-                            await gbaController.holdDown(botHoldTime)
-                        case 7:
-                            await gbaController.holdLeft(botHoldTime)
-                        case 8:
-                            await gbaController.holdDown(botHoldTime)
-                        case 9:
-                            await gbaController.a(botPressTime)
-                        case 10:
-                            await gbaController.holdA(botHoldTime)
-                        case 11:
-                            await gbaController.b(botPressTime)
-                        case 12:
-                            await gbaController.holdB()
-                        case 13:
-                            await x(botPressTime)
-                        case 14:
-                            await y(botPressTime)
-                        case 15:
-                            await l(botPressTime)
-                        case 16:
-                            await r(botPressTime)
-                        case 17:
-                            await gbaController.wander(2, botHoldTime)
+                # 1/18 chance of no action
+                dice = random.randint(1, 18)
+                match dice:
+                    case 1:
+                        await gbaController.up(botPressTime)
+                    case 2:
+                        await gbaController.down(botPressTime)
+                    case 3:
+                        await gbaController.left(botPressTime)
+                    case 4:
+                        await gbaController.right(botPressTime)
+                    case 5:
+                        await gbaController.holdUp(botHoldTime)
+                    case 6:
+                        await gbaController.holdDown(botHoldTime)
+                    case 7:
+                        await gbaController.holdLeft(botHoldTime)
+                    case 8:
+                        await gbaController.holdDown(botHoldTime)
+                    case 9:
+                        await gbaController.a(botPressTime)
+                    case 10:
+                        await gbaController.holdA(botHoldTime)
+                    case 11:
+                        await gbaController.b(botPressTime)
+                    case 12:
+                        await gbaController.holdB()
+                    case 13:
+                        await x(botPressTime)
+                    case 14:
+                        await y(botPressTime)
+                    case 15:
+                        await l(botPressTime)
+                    case 16:
+                        await r(botPressTime)
+                    case 17:
+                        await gbaController.wander(2, botHoldTime)
+                    case 18:
+                        await time.sleep(0)
                         
             # burst snack controls
             elif chatPlays.currentSnack == "burst":
@@ -225,8 +225,8 @@ async def inputBot():
                 # time between inputs
                 await asyncio.sleep(random.randint(10, 80))
 
-                # 33% chance of no action
-                dice = random.randint(1, 3)
+                # 25% chance of no action
+                dice = random.randint(1, 4)
                 if dice != 1:
                     dice = random.randint(1, 9)
                     match dice:
