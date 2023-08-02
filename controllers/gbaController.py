@@ -259,7 +259,7 @@ async def inputBot():
                     dice = random.randint(1, 6)
                     match dice:
                         case 1:
-                            await north(lightPressTime)
+                            await slightUp(lightPressTime)
                         case 2:
                             await south(lightPressTime)
                         case 3:
@@ -283,7 +283,7 @@ async def inputBot():
                     dice = random.randint(1, 6)
                     match dice:
                         case 1:
-                            await north(lightPressTime)
+                            await slightUp(lightPressTime)
                         case 2:
                             await south(lightPressTime)
                         case 3:
@@ -378,7 +378,7 @@ async def controller(data):
             dice = random.randint(1, 40)
 
             # 2.5% chance of random input
-            if dice == 1 and (message == "a" or "hold a" in message or "mash a" in message or message == "b" or "hold b" in message or "mash b" in message or message == "x" or message == "y" or "select" in message or "start" in message or "up wander" in message or "down wander" in message or "left wander" in message or "right wander" in message or "wander" in message or "hold up" in message or "hold down" in message or "hold left" in message or "hold right" in message or "north" in message or "south" in message or "west" in message or "east" in message or "up" in message or "down" in message or "left" in message or "right" in message or "stop" in message or landmines[0] in message or landmines[1] in message or landmines[2] in message or landmines[3] in message or landmines[4] in message):
+            if dice == 1 and (message == "a" or "hold a" in message or "mash a" in message or message == "b" or "hold b" in message or "mash b" in message or message == "x" or message == "y" or "select" in message or "start" in message or "up wander" in message or "down wander" in message or "left wander" in message or "right wander" in message or "wander" in message or "hold up" in message or "hold down" in message or "hold left" in message or "hold right" in message or "slup" in message or "slown" in message or "sleft" in message or "slight" in message or "up" in message or "down" in message or "left" in message or "right" in message or "stop" in message or landmines[0] in message or landmines[1] in message or landmines[2] in message or landmines[3] in message or landmines[4] in message):
                 dice = random.randint(1, 28)
                 match dice:
                     case 1:
@@ -422,7 +422,7 @@ async def controller(data):
                     case 20:
                         await wander(4, holdTime)
                     case 21:
-                        await north(lightPressTime)
+                        await slightUp(lightPressTime)
                     case 22:
                         await south(lightPressTime)
                     case 23:
@@ -478,14 +478,14 @@ async def controller(data):
                     await holdRight(holdTime)
                 elif "hold right" in message:
                     await holdLeft(holdTime)
-                elif "north" in message:
-                    await south(lightPressTime)
-                elif "south" in message:
-                    await north(lightPressTime)
-                elif "west" in message:
-                    await east(lightPressTime)
-                elif "east" in message:
-                    await west(lightPressTime)
+                elif "slup" in message:
+                    await slightDown(lightPressTime)
+                elif "slown" in message:
+                    await slightUp(lightPressTime)
+                elif "sleft" in message:
+                    await slightRight(lightPressTime)
+                elif "slight" in message:
+                    await slightLeft(lightPressTime)
                 elif "up" in message:
                     await down(pressTime)
                 elif "down" in message:
@@ -543,14 +543,14 @@ async def controller(data):
                     await holdLeft(holdTime)
                 elif "hold right" in message:
                     await holdRight(holdTime)
-                elif "north" in message:
-                    await north(lightPressTime)
-                elif "south" in message:
-                    await south(lightPressTime)
-                elif "west" in message:
-                    await west(lightPressTime)
-                elif "east" in message:
-                    await east(lightPressTime)
+                elif "slup" in message:
+                    await slightUp(lightPressTime)
+                elif "slown" in message:
+                    await slightDown(lightPressTime)
+                elif "sleft" in message:
+                    await slightLeft(lightPressTime)
+                elif "slight" in message:
+                    await slightRight(lightPressTime)
                 elif "up" in message:
                     await up(pressTime)
                 elif "down" in message:
@@ -745,16 +745,16 @@ async def holdRight(holdTime):
         await chatPlays.releaseKey(chatPlays.keyCodes.get("S"))
         await chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), holdTime)
 
-async def north(lightPressTime):
+async def slightUp(lightPressTime):
     await chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("W"), lightPressTime)
 
-async def south(lightPressTime):
+async def slightDown(lightPressTime):
     await chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("S"), lightPressTime)
 
-async def west(lightPressTime):
+async def slightLeft(lightPressTime):
     await chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("A"), lightPressTime)
 
-async def east(lightPressTime):
+async def slightRight(lightPressTime):
     await chatPlays.holdAndReleaseKey(chatPlays.keyCodes.get("D"), lightPressTime)
 
 async def up(pressTime):
